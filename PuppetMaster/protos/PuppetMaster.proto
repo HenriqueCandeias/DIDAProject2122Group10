@@ -1,0 +1,12 @@
+﻿syntax = "proto3";
+
+service PuppetMasterService {
+	rpc ping(pingRequest) returns (pingReply);
+}
+
+message pingRequest {
+}
+
+message pingReply {
+	int32 ok = 1;
+}
