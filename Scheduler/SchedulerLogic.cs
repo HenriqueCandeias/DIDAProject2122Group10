@@ -9,11 +9,29 @@ using System.Threading.Tasks;
 
 namespace Scheduler
 {
+
+    //This is acts as a server
+    public class Scheduler : SchedulerService.SchedulerServiceBase
+    {
+        public override Task<DebugReply> Debug(DebugRequest request, ServerCallContext context)
+        {
+            return Task.FromResult<DebugReply>(debugImpl(request));
+        }
+
+        public DebugReply debugImpl(DebugRequest request)
+        {
+            return new DebugReply
+            {
+                Ok = true,
+            };
+        }
+    }
+
+    //this acts as a client
     public class PuppetMasterSchedulerService
     {
         private readonly GrpcChannel channel;
         private readonly PuppetMasterService.PuppetMasterServiceClient client;
-        private Server server;
 
         private string serverHostname = "localhost";
         private int serverPort = 10000;
@@ -39,13 +57,25 @@ namespace Scheduler
         }
     }
 
-    class Program
+    class SchedulerLogic
     {
 
         static void Main(string[] args)
         {
+            int Port = 10002;
+
+            Server server = new Server
+            {
+                Services = { SchedulerService.BindService(new Scheduler())},
+                Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) },
+            };
+
+            server.Start();
+
             PuppetMasterSchedulerService p = new PuppetMasterSchedulerService();
             p.Ping();
+
+            server.ShutdownAsync().Wait();
         }
     }
 }
