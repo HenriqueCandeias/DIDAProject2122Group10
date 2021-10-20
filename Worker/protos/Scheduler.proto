@@ -1,12 +1,12 @@
 ﻿syntax = "proto3";
 
 service SchedulerService {
-	rpc pingSS(pingSSRequest) returns (pingSSReply);
+	rpc pingSHW(pingSHWRequest) returns (pingSHWReply);
 }
 
-message pingSSRequest {
+message pingSHWRequest {
 }
 
-message pingSSReply {
+message pingSHWReply {
 	int32 ok = 1;
 }

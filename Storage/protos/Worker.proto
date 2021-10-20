@@ -1,0 +1,12 @@
+﻿syntax = "proto3";
+
+service WorkerService {
+	rpc pingWS(pingWSRequest) returns (pingWSReply);
+}
+
+message pingWSRequest {
+}
+
+message pingWSReply {
+	int32 ok = 1;
+}

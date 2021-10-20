@@ -15,10 +15,10 @@ namespace Worker
         public class StorageWorkerchatService
         {
             private readonly GrpcChannel channel;
-            private readonly StorageService.StorageServiceClient client;
+            private readonly WorkerService.WorkerServiceClient client;
 
             private string serverHostname = "localhost";
-            private int serverPort = 10004;
+            private int serverPort = 10006;
 
             public StorageWorkerchatService()
             {
@@ -26,13 +26,13 @@ namespace Worker
                         "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
                 channel = GrpcChannel.ForAddress("http://" + serverHostname + ":" + serverPort.ToString());
 
-                client = new StorageService.StorageServiceClient(channel);
+                client = new WorkerService.WorkerServiceClient(channel);
             }
 
             public void Ping()
             {
 
-                pingSWReply reply = client.pingSW(new pingSWRequest
+                pingWSReply reply = client.pingWS(new pingWSRequest
                 {
 
                 });
@@ -41,11 +41,44 @@ namespace Worker
                 Console.WriteLine("worker main");
             }
         }
+
+        //This is acts as a server
+        public class Worker : SchedulerService.SchedulerServiceBase
+        {
+            public override Task<pingSHWReply> pingSHW(pingSHWRequest request, ServerCallContext context)
+            {
+                return Task.FromResult<pingSHWReply>(pingImpl(request));
+            }
+
+            private pingSHWReply pingImpl(pingSHWRequest request)
+            {
+                return new pingSHWReply
+                {
+                    Ok = 1,
+                };
+            }
+        }
         static void Main(string[] args)
         {
-            StorageWorkerchatService SW = new StorageWorkerchatService();
+            int Port = 10004;
+
+            Server server = new Server
+            {
+                Services = { SchedulerService.BindService(new Worker()) },
+                Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) },
+            };
+
+            server.Start();
+
+            StorageWorkerchatService WS = new StorageWorkerchatService();
+            Console.WriteLine("Press any key to send ping to storage...");
             Console.ReadKey();
-            SW.Ping();
+            WS.Ping();
+
+            Console.WriteLine("Press any key to stop the server Worker...");
+            Console.ReadKey();
+
+            server.ShutdownAsync().Wait();
         }
     }
 }

@@ -57,6 +57,37 @@ namespace Scheduler
         }
     }
 
+    //this acts as a client for the worker
+    public class SchedulerWorkerchatService
+    {
+        private readonly GrpcChannel channel;
+        private readonly SchedulerService.SchedulerServiceClient client;
+
+        private string serverHostname = "localhost";
+        private int serverPort = 10004;
+
+        public SchedulerWorkerchatService()
+        {
+            AppContext.SetSwitch(
+                    "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            channel = GrpcChannel.ForAddress("http://" + serverHostname + ":" + serverPort.ToString());
+
+            client = new SchedulerService.SchedulerServiceClient(channel);
+        }
+
+        public void PingWorker()
+        {
+
+            pingSHWReply reply = client.pingSHW(new pingSHWRequest
+            {
+
+            });
+
+            Console.WriteLine(reply);
+            Console.WriteLine("worker main");
+        }
+    }
+
     class SchedulerLogic
     {
 
@@ -72,8 +103,21 @@ namespace Scheduler
 
             server.Start();
 
+            
             PuppetMasterSchedulerService p = new PuppetMasterSchedulerService();
+            Console.WriteLine("Press any key to send ping to PuppetMaster...");
+            Console.ReadKey();
             p.Ping();
+            
+            
+            SchedulerWorkerchatService SW = new SchedulerWorkerchatService();
+            Console.WriteLine("Press any key to send ping to Worker...");
+            Console.ReadKey();
+            SW.PingWorker();
+            
+
+            Console.WriteLine("Press any key to stop the server Scheduler...");
+            Console.ReadKey();
 
             server.ShutdownAsync().Wait();
         }

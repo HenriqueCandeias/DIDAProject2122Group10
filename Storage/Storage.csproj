@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="protos\Storage.proto" />
+    <None Remove="protos\Worker.proto" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="protos\Storage.proto" GrpcServices="Server" />
+    <Protobuf Include="protos\Worker.proto" GrpcServices="Server" />
   </ItemGroup>
 
 </Project>

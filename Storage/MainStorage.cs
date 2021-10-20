@@ -8,16 +8,16 @@ using Grpc.Net.Client;
 namespace Storage
 {
     //This is acts as a server
-    public class Storage : StorageService.StorageServiceBase
+    public class Storage : WorkerService.WorkerServiceBase
     {
-        public override Task<pingSWReply> pingSW(pingSWRequest request, ServerCallContext context)
+        public override Task<pingWSReply> pingWS(pingWSRequest request, ServerCallContext context)
         {
-            return Task.FromResult<pingSWReply>(pingImpl(request));
+            return Task.FromResult<pingWSReply>(pingImpl(request));
         }
 
-        private pingSWReply pingImpl(pingSWRequest request)
+        private pingWSReply pingImpl(pingWSRequest request)
         {
-            return new pingSWReply
+            return new pingWSReply
             {
                 Ok = 1,
             };
@@ -27,18 +27,18 @@ namespace Storage
     {
         static void Main(string[] args)
         {
-            int Port = 10004;
+            int Port = 10006;
 
             Server server = new Server
             {
-                Services = { StorageService.BindService(new Storage()) },
+                Services = { WorkerService.BindService(new Storage()) },
                 Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) },
             };
 
             server.Start();
 
             Console.WriteLine("ChatServer server listening on port " + Port);
-            Console.WriteLine("Press any key to stop the server...");
+            Console.WriteLine("Press any key to stop the server Storage...");
             Console.ReadKey();
 
             server.ShutdownAsync().Wait();
