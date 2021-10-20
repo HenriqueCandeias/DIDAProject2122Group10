@@ -30,7 +30,7 @@ namespace PuppetMaster
     public class SchedulerPuppetMasterService
     {
         private readonly GrpcChannel channel;
-        private readonly SchedulerService.SchedulerServiceClient client;
+        private readonly SchedulerDebugService.SchedulerDebugServiceClient client;
 
         private string serverHostname = "localhost";
         private int serverPort = 10002;
@@ -41,7 +41,7 @@ namespace PuppetMaster
                     "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
             channel = GrpcChannel.ForAddress("http://" + serverHostname + ":" + serverPort.ToString());
 
-            client = new SchedulerService.SchedulerServiceClient(channel);
+            client = new SchedulerDebugService.SchedulerDebugServiceClient(channel);
         }
 
         public void Debug()

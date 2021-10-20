@@ -1,0 +1,12 @@
+﻿syntax = "proto3";
+
+service StorageService {
+	rpc pingSW(pingSWRequest) returns (pingSWReply);
+}
+
+message pingSWRequest {
+}
+
+message pingSWReply {
+	int32 ok = 1;
+}

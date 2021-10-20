@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="protos\Scheduler.proto" />
+    <None Remove="protos\SchedulerDebug.proto" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,7 +21,7 @@
   </ItemGroup>
   
   <ItemGroup>
-	  <Protobuf Include="protos\Scheduler.proto" GrpcServices="Client" />
+	  <Protobuf Include="protos\SchedulerDebug.proto" GrpcServices="Client" />
 	  <Protobuf Include="protos\PuppetMaster.proto" GrpcServices="Server" />
   </ItemGroup>
 

@@ -11,7 +11,7 @@ namespace Scheduler
 {
 
     //This is acts as a server
-    public class Scheduler : SchedulerService.SchedulerServiceBase
+    public class Scheduler : SchedulerDebugService.SchedulerDebugServiceBase
     {
         public override Task<DebugReply> Debug(DebugRequest request, ServerCallContext context)
         {
@@ -66,7 +66,7 @@ namespace Scheduler
 
             Server server = new Server
             {
-                Services = { SchedulerService.BindService(new Scheduler())},
+                Services = { SchedulerDebugService.BindService(new Scheduler())},
                 Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) },
             };
 
