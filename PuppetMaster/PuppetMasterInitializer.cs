@@ -9,6 +9,8 @@ namespace PuppetMaster
 
         private bool debug = false;
 
+        private int Port = 10002;
+
         public void execute(string command)
         {
             string[] words = command.Split(' ');
@@ -62,7 +64,7 @@ namespace PuppetMaster
             p_info.WindowStyle = ProcessWindowStyle.Normal;
             p_info.FileName = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Scheduler\\bin\\Debug\\netcoreapp3.1\\Scheduler.exe";
 
-            p_info.Arguments = server_id + ' ' + URL;
+            p_info.Arguments = server_id + " " + URL + " " + Port.ToString();
 
             Process.Start(p_info);
         }
@@ -75,7 +77,7 @@ namespace PuppetMaster
             p_info.WindowStyle = ProcessWindowStyle.Normal;
             p_info.FileName = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Worker\\bin\\Debug\\netcoreapp3.1\\Worker.exe";
 
-            p_info.Arguments = server_id + ' ' + URL;
+            p_info.Arguments = server_id + " " + URL + " " + Port.ToString();
 
             Process.Start(p_info);
         }
@@ -83,12 +85,12 @@ namespace PuppetMaster
         public void startStorage(string server_id, string URL)
         {
             ProcessStartInfo p_info = new ProcessStartInfo();
-            p_info.UseShellExecute = true;
+            p_info.UseShellExecute = true;  
             p_info.CreateNoWindow = false;
             p_info.WindowStyle = ProcessWindowStyle.Normal;
             p_info.FileName = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Storage\\bin\\Debug\\netcoreapp3.1\\Storage.exe";
 
-            p_info.Arguments = server_id + ' ' + URL;
+            p_info.Arguments = server_id + " " + URL + " " + Port.ToString();
 
             Process.Start(p_info);
         }

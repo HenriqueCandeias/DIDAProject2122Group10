@@ -93,7 +93,10 @@ namespace Scheduler
 
         static void Main(string[] args)
         {
-            int Port = 10002;
+            Console.WriteLine(args.ToString());
+            int Port = 10006;
+
+            //Console.WriteLine(Port);
 
             Server server = new Server
             {
