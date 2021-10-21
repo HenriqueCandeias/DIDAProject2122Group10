@@ -1,0 +1,12 @@
+﻿syntax = "proto3";
+
+service SchedulerStorageService {
+	rpc pingSS(pingSSRequest) returns (pingSSReply);
+}
+
+message pingSSRequest {
+}
+
+message pingSSReply {
+	int32 ok = 1;
+}

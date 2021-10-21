@@ -6,6 +6,9 @@ using System.IO;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using DIDAWorker;
 
 namespace Worker
 {
@@ -58,6 +61,41 @@ namespace Worker
                 };
             }
         }
+
+        static void LoadByReflection(string className)
+        {
+            string _dllNameTermination = ".dll";
+            string _currWorkingDir = Directory.GetCurrentDirectory();
+            IDIDAOperator _objLoadedByReflection;
+
+
+            Console.WriteLine("Current working directory (cwd): " + _currWorkingDir);
+            foreach (string filename in Directory.EnumerateFiles(_currWorkingDir))
+            {
+                Console.WriteLine("file in cwd: " + Path.GetFileName(filename));
+                if (filename.EndsWith(_dllNameTermination))
+                {
+                    Console.WriteLine("File is a dll...Let's look at it's contained types...");
+                    Assembly _dll = Assembly.LoadFrom(filename);
+                    Type[] _typeList = _dll.GetTypes();
+                    foreach (Type type in _typeList)
+                    {
+                        Console.WriteLine("type contained in dll: " + type.Name);
+                        if (type.Name == className)
+                        {
+                            Console.WriteLine("Found type to load dynamically: " + className);
+                            _objLoadedByReflection = (IDIDAOperator)Activator.CreateInstance(type);
+                            foreach (MethodInfo method in type.GetMethods())
+                            {
+                                Console.WriteLine("method from class " + className + ": " + method.Name);
+                            }
+                            //_objLoadedByReflection. function of class
+                        }
+                    }
+                }
+            }
+        }
+
         static void Main(string[] args)
         {
             int Port = 10004;
@@ -69,6 +107,8 @@ namespace Worker
             };
 
             server.Start();
+
+            //LoadByReflection("CounterOperator");
 
             StorageWorkerchatService WS = new StorageWorkerchatService();
             Console.WriteLine("Press any key to send ping to storage...");
