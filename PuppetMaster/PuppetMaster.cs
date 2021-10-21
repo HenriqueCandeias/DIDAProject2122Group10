@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,10 +9,10 @@ using Grpc.Core;
 using Grpc.Net.Client;
 
 namespace PuppetMaster
-{
+{   
 
     //This acts as a server
-    class PuppetMaster : PuppetMasterService.PuppetMasterServiceBase
+    class PuppetMasterServer : PuppetMasterService.PuppetMasterServiceBase
     {
         public override Task<pingReply> ping(pingRequest request, ServerCallContext context)
         {
@@ -27,7 +29,7 @@ namespace PuppetMaster
     }
 
     //This acts as a client
-    public class SchedulerPuppetMasterService
+    public class SchedulerServiceClient
     {
         private readonly GrpcChannel channel;
         private readonly SchedulerDebugService.SchedulerDebugServiceClient client;
@@ -35,7 +37,7 @@ namespace PuppetMaster
         private string serverHostname = "localhost";
         private int serverPort = 10002;
 
-        public SchedulerPuppetMasterService()
+        public SchedulerServiceClient()
         {
             AppContext.SetSwitch(
                     "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
@@ -57,7 +59,7 @@ namespace PuppetMaster
 
     }
 
-    static class PuppetMasterProgram
+    static class PuppetMasterProgram    
     {
         /// <summary>
         ///  The main entry point for the application.
@@ -69,13 +71,16 @@ namespace PuppetMaster
 
             Server server = new Server
             {
-                Services = { PuppetMasterService.BindService(new PuppetMaster()) },
+                Services = { PuppetMasterService.BindService(new PuppetMasterServer()) },
                 Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
             };
             server.Start();
+            /*
+            PuppetMasterInitializer initializer = new PuppetMasterInitializer();
+            initializer.startScheduler();
 
-            SchedulerPuppetMasterService s = new SchedulerPuppetMasterService();
-            s.Debug();
+            SchedulerServiceClient s = new SchedulerServiceClient();
+            s.Debug();*/
 
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
