@@ -23,7 +23,7 @@ namespace PuppetMaster
 
         private void StartButton_Click(object sender, EventArgs e)
         {
-            int Port = 10000;
+            int Port = 10001;
 
             server = new Server
             {

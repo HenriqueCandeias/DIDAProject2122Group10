@@ -66,6 +66,7 @@ namespace PuppetMaster
 
             p_info.Arguments = server_id + " " + URL + " " + Port.ToString();
 
+            Port++;
             Process.Start(p_info);
         }
 
@@ -79,6 +80,7 @@ namespace PuppetMaster
 
             p_info.Arguments = server_id + " " + URL + " " + Port.ToString();
 
+            Port++;
             Process.Start(p_info);
         }
 
@@ -92,6 +94,7 @@ namespace PuppetMaster
 
             p_info.Arguments = server_id + " " + URL + " " + Port.ToString();
 
+            Port++;
             Process.Start(p_info);
         }
 
