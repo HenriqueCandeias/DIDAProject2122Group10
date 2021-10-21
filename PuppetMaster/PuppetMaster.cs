@@ -75,6 +75,10 @@ namespace PuppetMaster
                 Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
             };
             server.Start();
+
+            PuppetMasterInitializer initializer = new PuppetMasterInitializer();
+            initializer.start();
+
             /*
             PuppetMasterInitializer initializer = new PuppetMasterInitializer();
             initializer.startScheduler();
