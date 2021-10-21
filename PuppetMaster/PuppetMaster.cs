@@ -67,31 +67,12 @@ namespace PuppetMaster
         [STAThread]
         static void Main()
         {
-            int Port = 10000;
-
-            Server server = new Server
-            {
-                Services = { PuppetMasterService.BindService(new PuppetMasterServer()) },
-                Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
-            };
-            server.Start();
-
-            PuppetMasterInitializer initializer = new PuppetMasterInitializer();
-            initializer.start();
-
-            /*
-            PuppetMasterInitializer initializer = new PuppetMasterInitializer();
-            initializer.startScheduler();
-
-            SchedulerServiceClient s = new SchedulerServiceClient();
-            s.Debug();*/
-
+            //Starts the PuppetMasterGUI
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());
-
-            server.ShutdownAsync().Wait();
+            
         }
     }
 }
