@@ -12,7 +12,7 @@ using DIDAWorker;
 
 namespace Worker
 {
-    class MainStorage
+    class MainWorker
     {
         //this acts as a client
         public class StorageWorkerchatService

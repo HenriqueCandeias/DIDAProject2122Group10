@@ -76,7 +76,7 @@ namespace Storage
             };
         }
     }
-    class MainWorker
+    class MainStorage
     {
         static void Main(string[] args)
         {
