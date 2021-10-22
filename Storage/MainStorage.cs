@@ -27,7 +27,9 @@ namespace Storage
     {
         static void Main(string[] args)
         {
-            int Port = 10006;
+            int Port = Int32.Parse(args[2]);
+
+            Console.WriteLine("Starting Server on Port: " + Port);
 
             Server server = new Server
             {
@@ -37,7 +39,8 @@ namespace Storage
 
             server.Start();
 
-            Console.WriteLine("ChatServer server listening on port " + Port);
+            Console.WriteLine("Started Server on Port: " + Port);
+
             Console.WriteLine("Press any key to stop the server Storage...");
             Console.ReadKey();
 

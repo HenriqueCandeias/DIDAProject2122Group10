@@ -95,7 +95,7 @@ namespace Scheduler
         {
             int Port = Int32.Parse(args[2]);
 
-            //Console.WriteLine(Port);
+            Console.WriteLine("Starting Server on Port: " + Port);
 
             Server server = new Server
             {
@@ -105,7 +105,8 @@ namespace Scheduler
 
             server.Start();
 
-            
+            Console.WriteLine("Started Server on Port: " + Port);
+
             PuppetMasterSchedulerService p = new PuppetMasterSchedulerService();
             Console.WriteLine("Press any key to send ping to PuppetMaster...");
             Console.ReadKey();

@@ -98,7 +98,9 @@ namespace Worker
 
         static void Main(string[] args)
         {
-            int Port = 10004;
+            int Port = Int32.Parse(args[2]);
+
+            Console.WriteLine("Starting Server on Port: " + Port);
 
             Server server = new Server
             {
@@ -107,6 +109,8 @@ namespace Worker
             };
 
             server.Start();
+
+            Console.WriteLine("Started Server on Port: " + Port);
 
             //LoadByReflection("CounterOperator");
 

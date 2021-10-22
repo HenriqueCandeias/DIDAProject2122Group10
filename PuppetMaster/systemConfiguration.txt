@@ -1,1 +1,3 @@
 ﻿scheduler 1 localhost
+worker 2 localhost
+storage 3 localhost
