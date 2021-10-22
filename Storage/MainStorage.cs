@@ -52,7 +52,7 @@ namespace Storage
     }
 
 
-    //This is acts as a server
+    //This is acts as a server for worker
     public class Storage : WorkerService.WorkerServiceBase
     {
 
@@ -61,6 +61,75 @@ namespace Storage
         public Storage()
         {
             Mstorage = new StorageImpl();
+        }
+
+        public override Task<updateIfReply> updateIf(updateIfRequest request, ServerCallContext context)
+        {
+            return Task.FromResult<updateIfReply>(updateIfImpl(request));
+        }
+
+        private updateIfReply updateIfImpl(updateIfRequest request)
+        {
+            DIDAVersion reply = Mstorage.updateIfValueIs(request.Id, request.OldValue, request.NewValue);
+
+            return new updateIfReply
+            {
+                DidaVersion = new didaVersion
+                {
+                    VersionNumber = reply.versionNumber,
+                    ReplicaId = reply.replicaId,
+                },
+            };
+
+        }
+
+        public override Task<writeStorageReply> writeStorage(writeStorageRequest request, ServerCallContext context)
+        {
+            return Task.FromResult<writeStorageReply>(writeStorageImpl(request));
+        }
+
+        private writeStorageReply writeStorageImpl(writeStorageRequest request)
+        {
+            DIDAVersion reply = Mstorage.write(request.Id, request.Val);
+
+            return new writeStorageReply
+            {
+                DidaVersion = new didaVersion
+                {
+                    VersionNumber = reply.versionNumber,
+                    ReplicaId = reply.replicaId,
+                },
+            };
+        }
+
+        public override Task<readStorageReply> readStorage(readStorageRequest request, ServerCallContext context)
+        {
+            return Task.FromResult<readStorageReply>(readStorageImpl(request));
+        }
+
+        private readStorageReply readStorageImpl(readStorageRequest request)
+        {
+            DIDAVersion didaversion = new DIDAVersion();
+
+            didaversion.replicaId = request.DidaVersion.ReplicaId;
+            didaversion.versionNumber = request.DidaVersion.VersionNumber;
+
+            DIDARecord reply = Mstorage.read(request.Id, didaversion);
+
+            return new readStorageReply
+            {
+                DidaRecord = new didaRecord
+                {
+                    Id = reply.id,
+                    DidaVersion = new didaVersion
+                    {
+                        VersionNumber = reply.version.versionNumber,
+                        ReplicaId = reply.version.replicaId,
+                    },
+                    Val = reply.val
+                }                                
+            };
+                
         }
 
         public override Task<pingWSReply> pingWS(pingWSRequest request, ServerCallContext context)
@@ -80,7 +149,8 @@ namespace Storage
     {
         static void Main(string[] args)
         {
-            int Port = Int32.Parse(args[2]);
+            //int Port = Int32.Parse(args[2]);
+            int Port = 11111; //for testing
 
             Console.WriteLine("Starting Server on Port: " + Port);
 

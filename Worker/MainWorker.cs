@@ -9,19 +9,21 @@ using System.Threading.Tasks;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using DIDAWorker;
+using DIDAStorage;
 
 namespace Worker
 {
     class MainWorker
     {
-        //this acts as a client
+        //this acts as a client for storage
         public class StorageWorkerchatService
         {
             private readonly GrpcChannel channel;
             private readonly WorkerService.WorkerServiceClient client;
 
             private string serverHostname = "localhost";
-            private int serverPort = 10006;
+            //private int serverPort = 10004;
+            private int serverPort = 11111; //for tensting
 
             public StorageWorkerchatService()
             {
@@ -32,20 +34,62 @@ namespace Worker
                 client = new WorkerService.WorkerServiceClient(channel);
             }
 
+            public void Update(string id, string oldValue, string newValue)
+            {
+                updateIfReply updatereply = client.updateIf(new updateIfRequest 
+                { 
+                    Id = id,
+                    OldValue = oldValue,
+                    NewValue = newValue,
+                });
+
+                Console.WriteLine(updatereply);
+                Console.WriteLine("Storage update reply");
+            }
+
+            public void Write(string id, string val)
+            {
+                writeStorageReply Writereply = client.writeStorage(new writeStorageRequest
+                {
+                    Id = id,
+                    Val = val,
+                });
+
+                Console.WriteLine(Writereply);
+                Console.WriteLine("Storage write reply");
+            }
+
+            public void Read(DIDAVersion didaversion)
+            {
+                readStorageReply Readreply = client.readStorage(new readStorageRequest
+                {
+                    Id = "teste",
+                    DidaVersion = new didaVersion
+                    {
+                        VersionNumber = didaversion.versionNumber,
+                        ReplicaId = didaversion.replicaId,
+
+                    }
+                });
+
+                Console.WriteLine(Readreply);
+                Console.WriteLine("Storage read reply");
+            }
+
             public void Ping()
             {
-
+                
                 pingWSReply reply = client.pingWS(new pingWSRequest
                 {
 
                 });
 
                 Console.WriteLine(reply);
-                Console.WriteLine("worker main");
+                Console.WriteLine("ping worker main");
             }
         }
 
-        //This is acts as a server
+        //This is acts as a server for scheduler
         public class Worker : SchedulerService.SchedulerServiceBase
         {
             public override Task<pingSHWReply> pingSHW(pingSHWRequest request, ServerCallContext context)
@@ -98,7 +142,8 @@ namespace Worker
 
         static void Main(string[] args)
         {
-            int Port = Int32.Parse(args[2]);
+            //int Port = Int32.Parse(args[2]);
+            int Port = 11112; // for testing
 
             Console.WriteLine("Starting Server on Port: " + Port);
 
@@ -110,6 +155,8 @@ namespace Worker
 
             server.Start();
 
+            Thread.Sleep(1000);
+
             Console.WriteLine("Started Server on Port: " + Port);
 
             //LoadByReflection("CounterOperator");
@@ -117,7 +164,26 @@ namespace Worker
             StorageWorkerchatService WS = new StorageWorkerchatService();
             Console.WriteLine("Press any key to send ping to storage...");
             Console.ReadKey();
+
+            // testing
+
+            DIDAVersion versionDida = new DIDAVersion();
+            DIDARecord recordDida = new DIDARecord();
+
+            versionDida.replicaId = 14;
+            versionDida.versionNumber = 8;
+
+            recordDida.version = versionDida;
+
+            WS.Read(versionDida);
+
+            WS.Write(recordDida.id, "testing write");
+
+            WS.Update(recordDida.id, "testing write", "testing update");
+
             WS.Ping();
+
+            // testing 
 
             Console.WriteLine("Press any key to stop the server Worker...");
             Console.ReadKey();
