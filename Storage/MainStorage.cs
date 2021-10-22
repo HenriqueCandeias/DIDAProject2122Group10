@@ -55,6 +55,14 @@ namespace Storage
     //This is acts as a server
     public class Storage : WorkerService.WorkerServiceBase
     {
+
+        public StorageImpl Mstorage;
+
+        public Storage()
+        {
+            Mstorage = new StorageImpl();
+        }
+
         public override Task<pingWSReply> pingWS(pingWSRequest request, ServerCallContext context)
         {
             return Task.FromResult<pingWSReply>(pingImpl(request));
