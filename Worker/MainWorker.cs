@@ -16,18 +16,17 @@ namespace Worker
     class MainWorker
     {
         //this acts as a client for storage
-        public class StorageWorkerchatService
+        public class StorageWorkerService
         {
             private readonly GrpcChannel channel;
             private readonly WorkerService.WorkerServiceClient client;
 
             private string serverHostname = "localhost";
-            private int serverPort = 10004;
-            public StorageWorkerchatService()
+            public StorageWorkerService(string storagePort)
             {
                 AppContext.SetSwitch(
                         "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-                channel = GrpcChannel.ForAddress("http://" + serverHostname + ":" + serverPort.ToString());
+                channel = GrpcChannel.ForAddress("http://" + serverHostname + ":" + storagePort);
 
                 client = new WorkerService.WorkerServiceClient(channel);
             }
@@ -83,7 +82,7 @@ namespace Worker
                 });
 
                 Console.WriteLine(reply);
-                Console.WriteLine("ping worker main");
+                Console.WriteLine("ping storage");
             }
         }
 
@@ -156,8 +155,8 @@ namespace Worker
 
             Console.WriteLine("Started Server on Port: " + Port);
 
-            StorageWorkerchatService WS = new StorageWorkerchatService();
-            Console.WriteLine("Press any key to send ping to worker...");
+            StorageWorkerService WS = new StorageWorkerService(args[3]);
+            Console.WriteLine("Press any key to send ping to storage...");
             Console.ReadKey();
 
             // testing
@@ -170,11 +169,11 @@ namespace Worker
 
             recordDida.version = versionDida;
 
-            WS.Read(versionDida);
+            //WS.Read(versionDida);
 
-            WS.Write(recordDida.id, "testing write");
+            //WS.Write(recordDida.id, "testing write");
 
-            WS.Update(recordDida.id, "testing write", "testing update");
+            //WS.Update(recordDida.id, "testing write", "testing update");
 
             WS.Ping();
 

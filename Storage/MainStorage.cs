@@ -165,7 +165,7 @@ namespace Storage
 
             Console.WriteLine("Press any key to stop the server Storage...");
             Console.ReadKey();
-
+            
             server.ShutdownAsync().Wait();
         }
     }

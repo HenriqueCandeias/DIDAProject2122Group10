@@ -19,6 +19,8 @@ namespace PuppetMaster
 
         private Dictionary<int, string> StoragesIdToURL = new Dictionary<int, string>();
 
+        private int storageID;
+
         public void execute(string command)
         {
             string[] words = command.Split(' ');
@@ -93,7 +95,7 @@ namespace PuppetMaster
             p_info.WindowStyle = ProcessWindowStyle.Normal;
             p_info.FileName = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Worker\\bin\\Debug\\netcoreapp3.1\\Worker.exe";
 
-            p_info.Arguments = server_id + " " + URL.Split(':')[0] + " " + URL.Split(':')[1];
+            p_info.Arguments = server_id + " " + URL.Split(':')[0] + " " + URL.Split(':')[1] + " " + StoragesIdToURL[storageID].Split(':')[1];
 
             Process.Start(p_info);
 
@@ -112,6 +114,8 @@ namespace PuppetMaster
 
             Process.Start(p_info);
 
+
+            storageID = Int32.Parse(server_id);
             StoragesIdToURL.Add(Int32.Parse(server_id), URL);
         }
 
