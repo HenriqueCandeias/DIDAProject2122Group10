@@ -22,5 +22,10 @@
   <ItemGroup>
     <Protobuf Include="protos\Worker.proto" GrpcServices="Server" />
   </ItemGroup>
+  <ItemGroup>
+	  <Reference Include="LibDIDAStorage">
+	   <HintPath>..\DIDALibraries\LibDIDAStorage.dll</HintPath>
+	  </Reference>
+  </ItemGroup>
 
 </Project>
