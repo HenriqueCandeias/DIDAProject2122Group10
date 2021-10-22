@@ -22,9 +22,7 @@ namespace Worker
             private readonly WorkerService.WorkerServiceClient client;
 
             private string serverHostname = "localhost";
-            //private int serverPort = 10004;
-            private int serverPort = 11111; //for tensting
-
+            private int serverPort = 10004;
             public StorageWorkerchatService()
             {
                 AppContext.SetSwitch(
@@ -142,8 +140,7 @@ namespace Worker
 
         static void Main(string[] args)
         {
-            //int Port = Int32.Parse(args[2]);
-            int Port = 11112; // for testing
+            int Port = Int32.Parse(args[2]);
 
             Console.WriteLine("Starting Server on Port: " + Port);
 
@@ -159,10 +156,8 @@ namespace Worker
 
             Console.WriteLine("Started Server on Port: " + Port);
 
-            //LoadByReflection("CounterOperator");
-
             StorageWorkerchatService WS = new StorageWorkerchatService();
-            Console.WriteLine("Press any key to send ping to storage...");
+            Console.WriteLine("Press any key to send ping to worker...");
             Console.ReadKey();
 
             // testing

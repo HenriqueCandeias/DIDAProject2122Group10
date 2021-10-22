@@ -8,7 +8,6 @@
   <ItemGroup>
     <None Remove="protos\PuppetMaster.proto" />
     <None Remove="protos\Scheduler.proto" />
-    <None Remove="protos\SchedulerDebug.proto" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,8 +22,7 @@
 
   <ItemGroup>
     <Protobuf Include="protos\PuppetMaster.proto" GrpcServices="Client" />
-    <Protobuf Include="protos\SchedulerDebug.proto" GrpcServices="Server" />
-    <Protobuf Include="protos\Scheduler.proto" GrpcServices="Client" />
+    <Protobuf Include="protos\Scheduler.proto" GrpcServices="Server" />
   </ItemGroup>
 
 </Project>

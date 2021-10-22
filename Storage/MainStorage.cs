@@ -149,8 +149,7 @@ namespace Storage
     {
         static void Main(string[] args)
         {
-            //int Port = Int32.Parse(args[2]);
-            int Port = 11111; //for testing
+            int Port = Int32.Parse(args[2]);
 
             Console.WriteLine("Starting Server on Port: " + Port);
 

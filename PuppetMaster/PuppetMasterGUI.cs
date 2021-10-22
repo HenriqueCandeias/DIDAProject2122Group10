@@ -11,12 +11,12 @@ using System.Windows.Forms;
 
 namespace PuppetMaster
 {
-    public partial class Form1 : Form
+    public partial class PuppetMasterGUI : Form
     {
         public PuppetMasterInitializer initializer;
         public Server server;
 
-        public Form1()
+        public PuppetMasterGUI()
         {
             InitializeComponent();
         }

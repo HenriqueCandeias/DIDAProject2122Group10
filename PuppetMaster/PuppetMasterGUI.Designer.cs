@@ -1,7 +1,7 @@
 ﻿
 namespace PuppetMaster
 {
-    partial class Form1
+    partial class PuppetMasterGUI
     {
         /// <summary>
         ///  Required designer variable.
