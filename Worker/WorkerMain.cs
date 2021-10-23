@@ -123,21 +123,21 @@ namespace Worker
 
         static void Main(string[] args)
         {
-            int Port = Int32.Parse(args[2]);
+            int port = Int32.Parse(args[2]);
 
-            Console.WriteLine("Starting Server on Port: " + Port);
+            Console.WriteLine("Starting Server on Port: " + port);
 
             Server server = new Server
             {
                 Services = { WorkerService.BindService(new WorkerServer()) },
-                Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) },
+                Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) },
             };
 
             server.Start();
 
             Thread.Sleep(1000);
 
-            Console.WriteLine("Started Server on Port: " + Port);
+            Console.WriteLine("Started Server on Port: " + port);
 
             ////StorageWorkerService WS = new StorageWorkerService(args[3]);
             Console.WriteLine("Press any key to send ping to storage...");

@@ -9,11 +9,11 @@ namespace Storage
 {
     class StorageServer : StorageService.StorageServiceBase
     {
-        public StorageImpl Mstorage = new StorageImpl();
+        public StorageImpl mStorage = new StorageImpl();
 
-        private Dictionary<int, string> WorkersIdToURL = new Dictionary<int, string>();
+        private Dictionary<int, string> workersIdToURL = new Dictionary<int, string>();
 
-        private Dictionary<int, string> StoragesIdToURL = new Dictionary<int, string>();
+        private Dictionary<int, string> storagesIdToURL = new Dictionary<int, string>();
 
         public override Task<SendNodesURLReply> SendNodesURL(SendNodesURLRequest request, ServerCallContext context)
         {
@@ -24,14 +24,14 @@ namespace Storage
         {
             foreach (int key in request.Workers.Keys)
             {
-                WorkersIdToURL.Add(key, request.Workers.GetValueOrDefault(key));
-                Console.WriteLine("Worker: " + key.ToString() + " URL: " + WorkersIdToURL.GetValueOrDefault(key));
+                workersIdToURL.Add(key, request.Workers.GetValueOrDefault(key));
+                Console.WriteLine("Worker: " + key.ToString() + " URL: " + workersIdToURL.GetValueOrDefault(key));
             }
 
             foreach (int key in request.Storages.Keys)
             {
-                StoragesIdToURL.Add(key, request.Storages.GetValueOrDefault(key));
-                Console.WriteLine("Storage: " + key.ToString() + " URL: " + StoragesIdToURL.GetValueOrDefault(key));
+                storagesIdToURL.Add(key, request.Storages.GetValueOrDefault(key));
+                Console.WriteLine("Storage: " + key.ToString() + " URL: " + storagesIdToURL.GetValueOrDefault(key));
             }
 
             return new SendNodesURLReply();
@@ -44,7 +44,7 @@ namespace Storage
 
         private UpdateIfReply UpdateIfImpl(UpdateIfRequest request)
         {
-            DIDAVersion reply = Mstorage.updateIfValueIs(request.Id, request.OldValue, request.NewValue);
+            DIDAVersion reply = mStorage.updateIfValueIs(request.Id, request.OldValue, request.NewValue);
 
             return new UpdateIfReply
             {
@@ -64,7 +64,7 @@ namespace Storage
 
         private WriteStorageReply WriteStorageImpl(WriteStorageRequest request)
         {
-            DIDAVersion reply = Mstorage.write(request.Id, request.Val);
+            DIDAVersion reply = mStorage.write(request.Id, request.Val);
 
             return new WriteStorageReply
             {
@@ -83,12 +83,13 @@ namespace Storage
 
         private ReadStorageReply ReadStorageImpl(ReadStorageRequest request)
         {
-            DIDAVersion didaversion = new DIDAVersion();
+            DIDAVersion didaversion = new DIDAVersion
+            {
+                replicaId = request.DidaVersion.ReplicaId,
+                versionNumber = request.DidaVersion.VersionNumber
+            };
 
-            didaversion.replicaId = request.DidaVersion.ReplicaId;
-            didaversion.versionNumber = request.DidaVersion.VersionNumber;
-
-            DIDARecord reply = Mstorage.read(request.Id, didaversion);
+            DIDARecord reply = mStorage.read(request.Id, didaversion);
 
             return new ReadStorageReply
             {

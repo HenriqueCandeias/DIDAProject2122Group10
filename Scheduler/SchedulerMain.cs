@@ -15,19 +15,19 @@ namespace Scheduler
 
         static void Main(string[] args)
         {
-            int Port = Int32.Parse(args[2]);
+            int port = Int32.Parse(args[2]);
 
-            Console.WriteLine("Starting Scheduler Server on Port: " + Port);
+            Console.WriteLine("Starting Scheduler Server on Port: " + port);
 
             Server server = new Server
             {
                 Services = { SchedulerService.BindService(new SchedulerServer())},
-                Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) },
+                Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) },
             };
 
             server.Start();
 
-            Console.WriteLine("Started Scheduler Server on Port: " + Port);
+            Console.WriteLine("Started Scheduler Server on Port: " + port);
 
             Console.WriteLine("Press any key to stop the server Scheduler...");
             Console.ReadKey();

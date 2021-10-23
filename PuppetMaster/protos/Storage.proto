@@ -2,8 +2,6 @@
 
 package storage;
 
-//option csharp_namespace = "Storage";
-
 service StorageService {
 	rpc SendNodesURL(SendNodesURLRequest) returns (SendNodesURLReply);
 }

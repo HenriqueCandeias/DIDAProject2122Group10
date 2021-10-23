@@ -12,19 +12,19 @@ namespace Storage
     {
         static void Main(string[] args)
         {
-            int Port = Int32.Parse(args[2]);
+            int port = Int32.Parse(args[2]);
 
-            Console.WriteLine("Starting Server on Port: " + Port);
+            Console.WriteLine("Starting Storage Server on Port: " + port);
 
             Server server = new Server
             {
                 Services = { StorageService.BindService(new StorageServer()) },
-                Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) },
+                Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) },
             };
 
             server.Start();
 
-            Console.WriteLine("Started Server on Port: " + Port);
+            Console.WriteLine("Started Server on Port: " + port);
 
             Console.WriteLine("Press any key to stop the server Storage...");
             Console.ReadKey();
