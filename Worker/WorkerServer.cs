@@ -1,13 +1,12 @@
 ﻿using Grpc.Core;
-using Grpc.Net.Client;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Scheduler
+namespace Worker
 {
-    class SchedulerServer : SchedulerService.SchedulerServiceBase
+    class WorkerServer : WorkerService.WorkerServiceBase
     {
         private Dictionary<int, string> WorkersIdToURL = new Dictionary<int, string>();
 
@@ -33,18 +32,6 @@ namespace Scheduler
             }
 
             return new SendNodesURLReply();
-        }
-
-        public override Task<StartAppReply> StartApp(StartAppRequest request, ServerCallContext context)
-        {
-            return Task.FromResult<StartAppReply>(StartAppImpl(request));
-        }
-
-        public StartAppReply StartAppImpl(StartAppRequest request)
-        {
-            //TODO Logic
-
-            return new StartAppReply();
         }
     }
 }

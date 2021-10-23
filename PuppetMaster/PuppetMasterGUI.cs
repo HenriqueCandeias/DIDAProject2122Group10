@@ -33,12 +33,12 @@ namespace PuppetMaster
             server.Start();
 
             initializer = new PuppetMasterInitializer();
-            initializer.start();
+            initializer.Start();
         }
 
         private void RunButton_Click(object sender, EventArgs e)
         {
-            initializer.execute(CommandsInputBox.Text);
+            initializer.Execute(CommandsInputBox.Text);
             CommandsInputBox.Clear();
         }
     }

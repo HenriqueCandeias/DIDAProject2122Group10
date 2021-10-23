@@ -8,18 +8,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Storage;
 using DIDAWorker;
 using DIDAStorage;
 
 namespace Worker
 {
-    class MainWorker
+    class WorkerMain
     {
         //this acts as a client for storage
         public class StorageWorkerService
         {
             private readonly GrpcChannel channel;
-            private readonly WorkerService.WorkerServiceClient client;
+            private readonly StorageService.StorageServiceClient client;
 
             private string serverHostname = "localhost";
             public StorageWorkerService(string storagePort)
@@ -28,12 +29,12 @@ namespace Worker
                         "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
                 channel = GrpcChannel.ForAddress("http://" + serverHostname + ":" + storagePort);
 
-                client = new WorkerService.WorkerServiceClient(channel);
+                client = new StorageService.StorageServiceClient(channel);
             }
 
             public void Update(string id, string oldValue, string newValue)
             {
-                updateIfReply updatereply = client.updateIf(new updateIfRequest 
+                UpdateIfReply updatereply = client.UpdateIf(new UpdateIfRequest 
                 { 
                     Id = id,
                     OldValue = oldValue,
@@ -46,7 +47,7 @@ namespace Worker
 
             public void Write(string id, string val)
             {
-                writeStorageReply Writereply = client.writeStorage(new writeStorageRequest
+                WriteStorageReply Writereply = client.WriteStorage(new WriteStorageRequest
                 {
                     Id = id,
                     Val = val,
@@ -58,10 +59,10 @@ namespace Worker
 
             public void Read(DIDAVersion didaversion)
             {
-                readStorageReply Readreply = client.readStorage(new readStorageRequest
+                ReadStorageReply Readreply = client.ReadStorage(new ReadStorageRequest
                 {
                     Id = "teste",
-                    DidaVersion = new didaVersion
+                    DidaVersion = new DidaVersion
                     {
                         VersionNumber = didaversion.versionNumber,
                         ReplicaId = didaversion.replicaId,
@@ -76,30 +77,13 @@ namespace Worker
             public void Ping()
             {
                 
-                pingWSReply reply = client.pingWS(new pingWSRequest
+                PingWSReply reply = client.PingWS(new PingWSRequest
                 {
 
                 });
 
                 Console.WriteLine(reply);
                 Console.WriteLine("ping storage");
-            }
-        }
-
-        //This is acts as a server for scheduler
-        public class Worker : SchedulerService.SchedulerServiceBase
-        {
-            public override Task<pingSHWReply> pingSHW(pingSHWRequest request, ServerCallContext context)
-            {
-                return Task.FromResult<pingSHWReply>(pingImpl(request));
-            }
-
-            private pingSHWReply pingImpl(pingSHWRequest request)
-            {
-                return new pingSHWReply
-                {
-                    Ok = 1,
-                };
             }
         }
 
@@ -145,7 +129,7 @@ namespace Worker
 
             Server server = new Server
             {
-                Services = { SchedulerService.BindService(new Worker()) },
+                Services = { WorkerService.BindService(new WorkerServer()) },
                 Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) },
             };
 
@@ -155,7 +139,7 @@ namespace Worker
 
             Console.WriteLine("Started Server on Port: " + Port);
 
-            StorageWorkerService WS = new StorageWorkerService(args[3]);
+            ////StorageWorkerService WS = new StorageWorkerService(args[3]);
             Console.WriteLine("Press any key to send ping to storage...");
             Console.ReadKey();
 
@@ -175,7 +159,7 @@ namespace Worker
 
             //WS.Update(recordDida.id, "testing write", "testing update");
 
-            WS.Ping();
+            ////WS.Ping();
 
             // testing 
 

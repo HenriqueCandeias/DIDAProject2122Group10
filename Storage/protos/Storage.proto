@@ -1,0 +1,72 @@
+﻿syntax = "proto3";
+
+package storage;
+
+service StorageService {
+	rpc SendNodesURL(SendNodesURLRequest) returns (SendNodesURLReply);
+	rpc PingWS(PingWSRequest) returns (PingWSReply);
+	rpc ReadStorage (ReadStorageRequest) returns (ReadStorageReply);
+	rpc WriteStorage (WriteStorageRequest) returns (WriteStorageReply);
+	rpc UpdateIf (UpdateIfRequest) returns (UpdateIfReply);
+}
+
+//// structures ////
+
+message DidaVersion {
+	int32 versionNumber = 1;
+	int32 replicaId = 2;
+}
+
+message DidaRecord {
+	string id = 1;
+	DidaVersion DidaVersion = 2;
+	string val = 3;
+}
+
+////////////////////
+
+message ReadStorageRequest { 
+	string id = 1;
+	DidaVersion DidaVersion = 2;
+}
+
+message ReadStorageReply {
+	DidaRecord DidaRecord = 1;
+}
+
+message WriteStorageRequest {
+	string id = 1;
+	string val = 2;
+}
+
+message WriteStorageReply {
+	DidaVersion DidaVersion = 1;
+}
+
+message UpdateIfRequest {
+	string id = 1;
+	string oldValue = 2;
+	string newValue = 3;
+}
+
+message UpdateIfReply {
+	DidaVersion DidaVersion = 1;
+}
+
+// Other
+
+message PingWSRequest {
+}
+
+message PingWSReply {
+	int32 ok = 1;
+}
+
+message SendNodesURLRequest {
+	map<int32, string> workers = 1;
+	map<int32, string> storages = 2;
+}
+
+message SendNodesURLReply {
+
+}

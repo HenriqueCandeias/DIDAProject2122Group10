@@ -1,11 +1,24 @@
 ﻿syntax = "proto3";
 
+package scheduler;
+
 service SchedulerService {
+	rpc SendNodesURL(SendNodesURLRequest) returns (SendNodesURLReply);
 	rpc StartApp(StartAppRequest) returns (StartAppReply);
 }
 
+message SendNodesURLRequest {
+	map<int32, string> workers = 1;
+	map<int32, string> storages = 2;
+}
+
+message SendNodesURLReply {
+
+}
+
 message StartAppRequest {
-	repeated string operators = 1;
+	string input = 1;
+	repeated string operators = 2;
 }
 
 message StartAppReply {

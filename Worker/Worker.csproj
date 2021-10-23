@@ -7,7 +7,8 @@
 
   <ItemGroup>
     <None Remove="protos\Scheduler.proto" />
-    <None Remove="protos\Worker.proto" />
+    <None Remove="protos\Storage.proto" />
+	<None Remove="protos\Worker.proto" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,7 +23,8 @@
 
   <ItemGroup>
     <Protobuf Include="protos\Scheduler.proto" GrpcServices="Server" />
-    <Protobuf Include="protos\Worker.proto" GrpcServices="Client" />
+    <Protobuf Include="protos\Storage.proto" GrpcServices="Both" />
+	<Protobuf Include="protos\Worker.proto" GrpcServices="Server" />
   </ItemGroup>
 
 	<ItemGroup>
