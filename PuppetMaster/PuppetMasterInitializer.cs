@@ -79,7 +79,7 @@ namespace PuppetMaster
                 UseShellExecute = true,
                 CreateNoWindow = false,
                 WindowStyle = ProcessWindowStyle.Normal,
-                FileName = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Scheduler\\bin\\Debug\\netcoreapp3.1\\Scheduler.exe",
+                FileName = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Scheduler\\bin\\Debug\\netcoreapp3.1\\Scheduler.exe",
 
                 Arguments = server_id + " " + URL.Split(':')[0] + " " + URL.Split(':')[1]
             };
@@ -100,7 +100,7 @@ namespace PuppetMaster
                 UseShellExecute = true,
                 CreateNoWindow = false,
                 WindowStyle = ProcessWindowStyle.Normal,
-                FileName = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Worker\\bin\\Debug\\netcoreapp3.1\\Worker.exe",
+                FileName = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Worker\\bin\\Debug\\netcoreapp3.1\\Worker.exe",
 
                 Arguments = server_id + " " + URL.Split(':')[0] + " " + URL.Split(':')[1]
             };
@@ -120,7 +120,7 @@ namespace PuppetMaster
                 UseShellExecute = true,
                 CreateNoWindow = false,
                 WindowStyle = ProcessWindowStyle.Normal,
-                FileName = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Storage\\bin\\Debug\\netcoreapp3.1\\Storage.exe",
+                FileName = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Storage\\bin\\Debug\\netcoreapp3.1\\Storage.exe",
 
                 Arguments = server_id + " " + URL.Split(':')[0] + " " + URL.Split(':')[1]
             };
@@ -142,13 +142,12 @@ namespace PuppetMaster
 
             Dictionary<int, string> operators = new Dictionary<int, string>();
 
-            string appFileContent = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\" + app_file;
+            string appFileContent = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\" + app_file;
 
-            foreach (string line in System.IO.File.ReadLines(appFileContent))
+            foreach (string line in File.ReadLines(appFileContent))
                 operators.Add(Int32.Parse(line.Split(' ')[2]), line.Split(' ')[1]);
 
-            for (int i = 0; i < operators.Count; i++)
-                request.Operators.Add(operators.GetValueOrDefault(i));
+            request.Operators.Add(operators);
 
             schedulerClient.StartApp(request);
         }

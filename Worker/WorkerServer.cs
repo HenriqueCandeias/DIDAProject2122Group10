@@ -33,5 +33,20 @@ namespace Worker
 
             return new SendNodesURLReply();
         }
+
+        public override Task<StartAppReply> StartApp(StartAppRequest request, ServerCallContext context)
+        {
+            return Task.FromResult<StartAppReply>(StartAppImpl(request));
+        }
+
+        public StartAppReply StartAppImpl(StartAppRequest request)
+        {
+            //TODO Logic
+
+            Console.WriteLine("Received a DIDARequest:");
+            Console.WriteLine(request.DidaRequest.ToString());
+
+            return new StartAppReply();
+        }
     }
 }

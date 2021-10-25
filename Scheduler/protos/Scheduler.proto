@@ -18,7 +18,7 @@ message SendNodesURLReply {
 
 message StartAppRequest {
 	string input = 1;
-	repeated string operators = 2;
+	map<int32, string> operators = 2;
 }
 
 message StartAppReply {
