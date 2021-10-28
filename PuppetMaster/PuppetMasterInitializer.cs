@@ -26,6 +26,57 @@ namespace PuppetMaster
 
         private Dictionary<int, StorageService.StorageServiceClient> storagesIdToClient = new Dictionary<int, StorageService.StorageServiceClient>();
 
+
+        public void Start()
+        {
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
+            ReadStartupCommands();
+            InformNodesAboutURL();
+        }
+
+        private void ReadStartupCommands()
+        {
+            string systemConfigurationFile = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\systemConfiguration.txt";
+
+            foreach (string line in System.IO.File.ReadLines(systemConfigurationFile))
+            {
+                Execute(line);
+            }
+        }
+
+        private void InformNodesAboutURL()
+        {
+            //Inform Scheduler about URLs
+
+            Scheduler.SendNodesURLRequest schedulerRequest = new Scheduler.SendNodesURLRequest();
+
+            schedulerRequest.Workers.Add(workersIdToURL);
+            schedulerRequest.Storages.Add(storagesIdToURL);
+
+            schedulerClient.SendNodesURL(schedulerRequest);
+
+            //Inform Workers about URLs
+
+            Worker.SendNodesURLRequest workersRequest = new Worker.SendNodesURLRequest();
+
+            workersRequest.Workers.Add(workersIdToURL);
+            workersRequest.Storages.Add(storagesIdToURL);
+
+            foreach (WorkerService.WorkerServiceClient worker in workersIdToClient.Values)
+                worker.SendNodesURL(workersRequest);
+
+            //Inform Storages about URLs
+
+            Storage.SendNodesURLRequest storagesRequest = new Storage.SendNodesURLRequest();
+
+            storagesRequest.Workers.Add(workersIdToURL);
+            storagesRequest.Storages.Add(storagesIdToURL);
+
+            foreach (StorageService.StorageServiceClient storage in storagesIdToClient.Values)
+                storage.SendNodesURL(storagesRequest);
+        }
+
         public void Execute(string command)
         {
             string[] words = command.Split(' ');
@@ -81,7 +132,7 @@ namespace PuppetMaster
                 WindowStyle = ProcessWindowStyle.Normal,
                 FileName = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Scheduler\\bin\\Debug\\netcoreapp3.1\\Scheduler.exe",
 
-                Arguments = server_id + " " + URL.Split(':')[0] + " " + URL.Split(':')[1]
+                Arguments = server_id + " " + URL.Split(':')[0] + ":" + URL.Split(':')[1] + " " + URL.Split(':')[2]
             };
 
             Process.Start(p_info);
@@ -89,7 +140,7 @@ namespace PuppetMaster
             schedulerIdToURL.Clear();
             schedulerIdToURL.Add(Int32.Parse(server_id), URL);
 
-            GrpcChannel channel = GrpcChannel.ForAddress("http://" + URL);
+            GrpcChannel channel = GrpcChannel.ForAddress(URL);
             schedulerClient = new SchedulerService.SchedulerServiceClient(channel);
         }
 
@@ -150,56 +201,6 @@ namespace PuppetMaster
             request.Operators.Add(operators);
 
             schedulerClient.StartApp(request);
-        }
-
-        public void Start()
-        {
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
-            ReadStartupCommands();
-            InformNodesAboutURL();
-        }
-
-        private void InformNodesAboutURL()
-        {
-            //Inform Scheduler about URLs
-
-            Scheduler.SendNodesURLRequest schedulerRequest = new Scheduler.SendNodesURLRequest();
-
-            schedulerRequest.Workers.Add(workersIdToURL);
-            schedulerRequest.Storages.Add(storagesIdToURL);
-
-            schedulerClient.SendNodesURL(schedulerRequest);
-
-            //Inform Workers about URLs
-
-            Worker.SendNodesURLRequest workersRequest = new Worker.SendNodesURLRequest();
-
-            workersRequest.Workers.Add(workersIdToURL);
-            workersRequest.Storages.Add(storagesIdToURL);
-
-            foreach (WorkerService.WorkerServiceClient worker in workersIdToClient.Values)
-                worker.SendNodesURL(workersRequest);
-
-            //Inform Storages about URLs
-
-            Storage.SendNodesURLRequest storagesRequest = new Storage.SendNodesURLRequest();
-
-            storagesRequest.Workers.Add(workersIdToURL);
-            storagesRequest.Storages.Add(storagesIdToURL);
-
-            foreach (StorageService.StorageServiceClient storage in storagesIdToClient.Values)
-                storage.SendNodesURL(storagesRequest);
-        }
-
-        private void ReadStartupCommands()
-        {
-            string systemConfigurationFile = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\systemConfiguration.txt";
-
-            foreach (string line in System.IO.File.ReadLines(systemConfigurationFile))
-            {
-                Execute(line);
-            }
         }
     }
 }
