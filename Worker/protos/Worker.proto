@@ -5,6 +5,8 @@ package worker;
 service WorkerService {
 	rpc SendNodesURL(SendNodesURLRequest) returns (SendNodesURLReply);
 	rpc StartApp(StartAppRequest) returns (StartAppReply);
+	rpc Status(StatusRequest) returns (StatusReply);
+
 }
 
 message SendNodesURLRequest {
@@ -49,4 +51,12 @@ message DIDAAssignment {
 message DIDAOperatorID {
 	string classname = 1;
 	int32 order = 2;
+}
+
+message StatusRequest {
+
+}
+
+message StatusReply {
+
 }

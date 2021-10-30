@@ -19,5 +19,10 @@ namespace Worker
         {
             return Task.FromResult<StartAppReply>(domain.StartAppImpl(request));
         }
+
+        public override Task<StatusReply> Status(StatusRequest request, ServerCallContext context)
+        {
+            return Task.FromResult<StatusReply>(domain.Status());
+        }
     }
 }

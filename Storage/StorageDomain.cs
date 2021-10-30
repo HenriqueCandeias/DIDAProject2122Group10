@@ -92,5 +92,11 @@ namespace Storage
                 Ok = 1,
             };
         }
+
+        public StatusReply Status()
+        {
+            //TODO display necessary info
+            return new StatusReply();
+        }
     }
 }

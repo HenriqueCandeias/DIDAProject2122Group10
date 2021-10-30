@@ -5,6 +5,7 @@ package scheduler;
 service SchedulerService {
 	rpc SendNodesURL(SendNodesURLRequest) returns (SendNodesURLReply);
 	rpc StartApp(StartAppRequest) returns (StartAppReply);
+	rpc Status(StatusRequest) returns (StatusReply);
 }
 
 message SendNodesURLRequest {
@@ -23,4 +24,12 @@ message StartAppRequest {
 
 message StartAppReply {
 	
+}
+
+message StatusRequest {
+
+}
+
+message StatusReply {
+
 }

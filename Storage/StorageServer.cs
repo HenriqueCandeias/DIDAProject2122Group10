@@ -35,5 +35,10 @@ namespace Storage
             return Task.FromResult<PingWSReply>(domain.Ping(request));
         }
 
+        public override Task<StatusReply> Status(StatusRequest request, ServerCallContext context)
+        {
+            return Task.FromResult<StatusReply>(domain.Status());
+        }
+
     }
 }

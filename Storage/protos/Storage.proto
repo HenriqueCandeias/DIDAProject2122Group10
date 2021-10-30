@@ -8,6 +8,7 @@ service StorageService {
 	rpc ReadStorage (ReadStorageRequest) returns (ReadStorageReply);
 	rpc WriteStorage (WriteStorageRequest) returns (WriteStorageReply);
 	rpc UpdateIf (UpdateIfRequest) returns (UpdateIfReply);
+	rpc Status(StatusRequest) returns (StatusReply);
 }
 
 //// structures ////
@@ -51,6 +52,14 @@ message UpdateIfRequest {
 
 message UpdateIfReply {
 	DidaVersion DidaVersion = 1;
+}
+
+message StatusRequest {
+
+}
+
+message StatusReply {
+
 }
 
 // Other

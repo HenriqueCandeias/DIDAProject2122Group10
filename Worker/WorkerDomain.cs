@@ -38,5 +38,11 @@ namespace Worker
 
             return new StartAppReply();
         }
+
+        public StatusReply Status()
+        {
+            //TODO display necessary info
+            return new StatusReply();
+        }
     }
 }
