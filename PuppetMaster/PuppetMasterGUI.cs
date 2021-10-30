@@ -13,6 +13,8 @@ namespace PuppetMaster
 {
     public partial class PuppetMasterGUI : Form
     {
+        public const int puppetMasterPort = 10001;
+
         public PuppetMasterInitializer initializer;
         public Server server;
 
@@ -23,12 +25,10 @@ namespace PuppetMaster
 
         private void StartButton_Click(object sender, EventArgs e)
         {
-            int Port = 10001;
-
             server = new Server
             {
                 Services = { PuppetMasterService.BindService(new PuppetMasterServer()) },
-                Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
+                Ports = { new ServerPort("localhost", puppetMasterPort, ServerCredentials.Insecure) }
             };
             server.Start();
 

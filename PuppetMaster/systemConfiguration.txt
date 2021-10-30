@@ -1,3 +1,0 @@
-﻿scheduler 1 http://localhost:10007
-storage 3 http://localhost:10009
-worker 2 http://localhost:10008

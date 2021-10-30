@@ -63,8 +63,8 @@ message PingWSReply {
 }
 
 message SendNodesURLRequest {
-	map<int32, string> workers = 1;
-	map<int32, string> storages = 2;
+	map<string, string> workers = 1;
+	map<string, string> storages = 2;
 }
 
 message SendNodesURLReply {

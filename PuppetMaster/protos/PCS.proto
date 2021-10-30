@@ -1,0 +1,37 @@
+﻿syntax = "proto3";
+
+package pcs;
+
+service PCSService {
+	rpc StartScheduler(StartSchedulerRequest) returns (StartSchedulerReply);
+	rpc StartWorker(StartWorkerRequest) returns (StartWorkerReply);
+	rpc StartStorage(StartStorageRequest) returns (StartStorageReply);
+}
+
+message StartSchedulerRequest {
+	string serverId = 1;
+	string url = 2;
+}
+
+message StartSchedulerReply {
+	
+}
+
+message StartWorkerRequest {
+	string serverId = 1;
+	string url = 2;
+	int32 gossipDelay = 3;
+}
+
+message StartWorkerReply {
+
+}
+
+message StartStorageRequest {
+	string serverId = 1;
+	string url = 2;
+	int32 gossipDelay = 3;
+}
+
+message StartStorageReply {
+}

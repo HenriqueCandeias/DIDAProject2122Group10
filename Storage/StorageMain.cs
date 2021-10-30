@@ -12,7 +12,7 @@ namespace Storage
     {
         static void Main(string[] args)
         {
-            int port = Int32.Parse(args[2]);
+            int port = Int32.Parse(args[1].Split(':')[2]);
 
             Console.WriteLine("Starting Storage Server on Port: " + port);
 

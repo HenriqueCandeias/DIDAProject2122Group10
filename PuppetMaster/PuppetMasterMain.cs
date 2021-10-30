@@ -11,7 +11,7 @@ using Grpc.Net.Client;
 namespace PuppetMaster
 {   
 
-    static class PuppetMasterProgram    
+    static class PuppetMasterMain    
     {
         /// <summary>
         ///  The main entry point for the application.

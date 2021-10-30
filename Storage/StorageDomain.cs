@@ -9,22 +9,22 @@ namespace Storage
     {
         public StorageImpl mStorage = new StorageImpl();
 
-        private Dictionary<int, string> workersIdToURL = new Dictionary<int, string>();
+        private Dictionary<string, string> workersIdToURL = new Dictionary<string, string>();
 
-        private Dictionary<int, string> storagesIdToURL = new Dictionary<int, string>();
+        private Dictionary<string, string> storagesIdToURL = new Dictionary<string, string>();
 
         public SendNodesURLReply SendNodesURL(SendNodesURLRequest request)
         {
-            foreach (int key in request.Workers.Keys)
+            foreach (string key in request.Workers.Keys)
             {
                 workersIdToURL.Add(key, request.Workers.GetValueOrDefault(key));
-                Console.WriteLine("Worker: " + key.ToString() + " URL: " + workersIdToURL.GetValueOrDefault(key));
+                Console.WriteLine("Worker: " + key + " URL: " + workersIdToURL.GetValueOrDefault(key));
             }
 
-            foreach (int key in request.Storages.Keys)
+            foreach (string key in request.Storages.Keys)
             {
                 storagesIdToURL.Add(key, request.Storages.GetValueOrDefault(key));
-                Console.WriteLine("Storage: " + key.ToString() + " URL: " + storagesIdToURL.GetValueOrDefault(key));
+                Console.WriteLine("Storage: " + key + " URL: " + storagesIdToURL.GetValueOrDefault(key));
             }
 
             return new SendNodesURLReply();

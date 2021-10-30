@@ -12,35 +12,39 @@ namespace Scheduler
     {
         private int executionId = 0;
 
-        private Dictionary<int, string> workersIdToURL = new Dictionary<int, string>();
+        private List<string> workersId = new List<string>();
 
-        private Dictionary<int, string> storagesIdToURL = new Dictionary<int, string>();
 
-        private Dictionary<int, WorkerService.WorkerServiceClient> workersIdToClient = new Dictionary<int, WorkerService.WorkerServiceClient>();
+
+        private Dictionary<string, string> workersIdToURL = new Dictionary<string, string>();
+
+        private Dictionary<string, string> storagesIdToURL = new Dictionary<string, string>();
+
+        private Dictionary<string, WorkerService.WorkerServiceClient> workersIdToClient = new Dictionary<string, WorkerService.WorkerServiceClient>();
 
         private Dictionary<string, WorkerService.WorkerServiceClient> workersURLToClient = new Dictionary<string, WorkerService.WorkerServiceClient>();
 
         public SendNodesURLReply SendNodesURL(SendNodesURLRequest request)
         {
-            foreach (int key in request.Workers.Keys)
+            foreach (string key in request.Workers.Keys)
             {
                 workersIdToURL.Add(key, request.Workers.GetValueOrDefault(key));
-                Console.WriteLine("Worker: " + key.ToString() + " URL: " + workersIdToURL.GetValueOrDefault(key));
+                Console.WriteLine("Worker: " + key + " URL: " + workersIdToURL.GetValueOrDefault(key));
             }
 
-            foreach (int key in request.Storages.Keys)
+            foreach (string key in request.Storages.Keys)
             {
                 storagesIdToURL.Add(key, request.Storages.GetValueOrDefault(key));
-                Console.WriteLine("Storage: " + key.ToString() + " URL: " + storagesIdToURL.GetValueOrDefault(key));
+                Console.WriteLine("Storage: " + key + " URL: " + storagesIdToURL.GetValueOrDefault(key));
             }
 
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
             GrpcChannel channel;
             WorkerService.WorkerServiceClient client;
-            foreach (KeyValuePair<int, string> pair in workersIdToURL)
+            foreach (KeyValuePair<string, string> pair in workersIdToURL)
             {
-                channel = GrpcChannel.ForAddress("http://" + pair.Value);
+                channel = GrpcChannel.ForAddress(pair.Value);
                 client = new WorkerService.WorkerServiceClient(channel);
 
                 workersIdToClient.Add(pair.Key, client);
@@ -52,7 +56,7 @@ namespace Scheduler
 
         public StartAppReply StartApp(StartAppRequest request)
         {
-            Console.WriteLine("Operators:");
+            Console.WriteLine("Received the following perators:");
             foreach (KeyValuePair<int, string> pair in request.Operators)
                 Console.WriteLine("operator " + pair.Value + " " + pair.Key);
 
@@ -88,9 +92,6 @@ namespace Scheduler
 
         private List<DIDAAssignment> GenerateChain(Google.Protobuf.Collections.MapField<int, string> operators)
         {
-            //TODO Implement logic (Consistent Hashing)
-            //This implementation assumes only one worker and one operator in the app
-
             List<DIDAAssignment> chain = new List<DIDAAssignment>();
 
             Console.WriteLine(operators);
@@ -102,8 +103,8 @@ namespace Scheduler
                     Classname = operators[0],
                     Order = 0,
                 },
-                Host = workersIdToURL.GetValueOrDefault(2).Split(':')[0],
-                Port = Int32.Parse(workersIdToURL.GetValueOrDefault(2).Split(':')[1]),
+                Host = workersIdToURL.GetValueOrDefault("2").Split(':')[0] + ":" + workersIdToURL.GetValueOrDefault("2").Split(':')[1],
+                Port = Int32.Parse(workersIdToURL.GetValueOrDefault("2").Split(':')[2]),
                 Output = "",
             };
 

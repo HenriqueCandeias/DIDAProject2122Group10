@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Worker", "Worker\Worker.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Storage", "Storage\Storage.csproj", "{B431AC07-4676-4BC3-A71B-B28EAA3507B2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PCS", "PCS\PCS.csproj", "{8CC7C4D3-240F-407F-BE86-A3B1FFD2C42A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{B431AC07-4676-4BC3-A71B-B28EAA3507B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B431AC07-4676-4BC3-A71B-B28EAA3507B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B431AC07-4676-4BC3-A71B-B28EAA3507B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8CC7C4D3-240F-407F-BE86-A3B1FFD2C42A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CC7C4D3-240F-407F-BE86-A3B1FFD2C42A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CC7C4D3-240F-407F-BE86-A3B1FFD2C42A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CC7C4D3-240F-407F-BE86-A3B1FFD2C42A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

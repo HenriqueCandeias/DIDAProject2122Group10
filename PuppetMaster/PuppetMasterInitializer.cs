@@ -1,4 +1,5 @@
 ﻿using Grpc.Net.Client;
+using Pcs;
 using Scheduler;
 using Worker;
 using System;
@@ -6,38 +7,55 @@ using Storage;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 
 namespace PuppetMaster
 {
     public class PuppetMasterInitializer
     {
+        private const int pcsServerPort = 10000;
 
         private bool debug = false;
 
-        private Dictionary<int, string> schedulerIdToURL = new Dictionary<int, string>();
+        private Dictionary<string, string> schedulerIdToURL = new Dictionary<string, string>();
 
-        private Dictionary<int, string> workersIdToURL = new Dictionary<int, string>();
+        private Dictionary<string, string> workersIdToURL = new Dictionary<string, string>();
 
-        private Dictionary<int, string> storagesIdToURL = new Dictionary<int, string>();
+        private Dictionary<string, string> storagesIdToURL = new Dictionary<string, string>();
 
         private SchedulerService.SchedulerServiceClient schedulerClient;
 
-        private Dictionary<int, WorkerService.WorkerServiceClient> workersIdToClient = new Dictionary<int, WorkerService.WorkerServiceClient>();
+        private Dictionary<string, WorkerService.WorkerServiceClient> workersIdToClient = new Dictionary<string, WorkerService.WorkerServiceClient>();
 
-        private Dictionary<int, StorageService.StorageServiceClient> storagesIdToClient = new Dictionary<int, StorageService.StorageServiceClient>();
+        private Dictionary<string, StorageService.StorageServiceClient> storagesIdToClient = new Dictionary<string, StorageService.StorageServiceClient>();
 
 
         public void Start()
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
+            //This function is only used to run the system in a single machine
+            StartPCS();
             ReadStartupCommands();
             InformNodesAboutURL();
         }
 
+        private void StartPCS()
+        {
+            ProcessStartInfo p_info = new ProcessStartInfo
+            {
+                UseShellExecute = true,
+                CreateNoWindow = false,
+                WindowStyle = ProcessWindowStyle.Normal,
+                FileName = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\PCS\\bin\\Debug\\netcoreapp3.1\\PCS.exe",
+            };
+
+            Process.Start(p_info);
+        }
+
         private void ReadStartupCommands()
         {
-            string systemConfigurationFile = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\systemConfiguration.txt";
+            string systemConfigurationFile = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\SystemConfig.txt";
 
             foreach (string line in System.IO.File.ReadLines(systemConfigurationFile))
             {
@@ -118,70 +136,67 @@ namespace PuppetMaster
                     break;
 
                 case "wait":
-                    System.Threading.Thread.Sleep(Int32.Parse(words[1]));
+                    Thread.Sleep(Int32.Parse(words[1]));
                     break;
             }
         }
 
         public void StartScheduler(string server_id, string URL)
         {
-            ProcessStartInfo p_info = new ProcessStartInfo
-            {
-                UseShellExecute = true,
-                CreateNoWindow = false,
-                WindowStyle = ProcessWindowStyle.Normal,
-                FileName = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Scheduler\\bin\\Debug\\netcoreapp3.1\\Scheduler.exe",
-
-                Arguments = server_id + " " + URL.Split(':')[0] + ":" + URL.Split(':')[1] + " " + URL.Split(':')[2]
-            };
-
-            Process.Start(p_info);
-
             schedulerIdToURL.Clear();
-            schedulerIdToURL.Add(Int32.Parse(server_id), URL);
+            schedulerIdToURL.Add(server_id, URL);
 
-            GrpcChannel channel = GrpcChannel.ForAddress(URL);
-            schedulerClient = new SchedulerService.SchedulerServiceClient(channel);
+            StartSchedulerRequest request = new StartSchedulerRequest()
+            {
+                ServerId = server_id,
+                Url = URL,
+            };
+            
+            GrpcChannel pcsChannel = GrpcChannel.ForAddress(URL.Split(':')[0] + ":" + URL.Split(':')[1] + ":" + pcsServerPort.ToString());
+            PCSService.PCSServiceClient pcsClient = new PCSService.PCSServiceClient(pcsChannel);
+
+            pcsClient.StartScheduler(request);
+
+            GrpcChannel schedulerChannel = GrpcChannel.ForAddress(URL);
+            schedulerClient = new SchedulerService.SchedulerServiceClient(schedulerChannel);
         }
 
         public void StartWorker(string server_id, string URL)
         {
-            ProcessStartInfo p_info = new ProcessStartInfo
-            {
-                UseShellExecute = true,
-                CreateNoWindow = false,
-                WindowStyle = ProcessWindowStyle.Normal,
-                FileName = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Worker\\bin\\Debug\\netcoreapp3.1\\Worker.exe",
+            workersIdToURL.Add(server_id, URL);
 
-                Arguments = server_id + " " + URL.Split(':')[0] + " " + URL.Split(':')[1]
+            StartWorkerRequest request = new StartWorkerRequest()
+            {
+                ServerId = server_id,
+                Url = URL,
             };
 
-            Process.Start(p_info);
+            GrpcChannel pcsChannel = GrpcChannel.ForAddress(URL.Split(':')[0] + ":" + URL.Split(':')[1] + ":" + pcsServerPort.ToString());
+            PCSService.PCSServiceClient pcsClient = new PCSService.PCSServiceClient(pcsChannel);
 
-            workersIdToURL.Add(Int32.Parse(server_id), URL);
+            pcsClient.StartWorker(request);
 
-            GrpcChannel channel = GrpcChannel.ForAddress("http://" + URL);
-            workersIdToClient.Add(Int32.Parse(server_id), new WorkerService.WorkerServiceClient(channel));
+            GrpcChannel workerChannel = GrpcChannel.ForAddress(URL);
+            workersIdToClient.Add(server_id, new WorkerService.WorkerServiceClient(workerChannel));
         }
 
         public void StartStorage(string server_id, string URL)
         {
-            ProcessStartInfo p_info = new ProcessStartInfo
-            {
-                UseShellExecute = true,
-                CreateNoWindow = false,
-                WindowStyle = ProcessWindowStyle.Normal,
-                FileName = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Storage\\bin\\Debug\\netcoreapp3.1\\Storage.exe",
+            storagesIdToURL.Add(server_id, URL);
 
-                Arguments = server_id + " " + URL.Split(':')[0] + " " + URL.Split(':')[1]
+            StartStorageRequest request = new StartStorageRequest()
+            {
+                ServerId = server_id,
+                Url = URL,
             };
 
-            Process.Start(p_info);
+            GrpcChannel pcsChannel = GrpcChannel.ForAddress(URL.Split(':')[0] + ":" + URL.Split(':')[1] + ":" + pcsServerPort.ToString());
+            PCSService.PCSServiceClient pcsClient = new PCSService.PCSServiceClient(pcsChannel);
 
-            storagesIdToURL.Add(Int32.Parse(server_id), URL);
+            pcsClient.StartStorage(request);
 
-            GrpcChannel channel = GrpcChannel.ForAddress("http://" + URL);
-            storagesIdToClient.Add(Int32.Parse(server_id), new StorageService.StorageServiceClient(channel));
+            GrpcChannel storageChannel = GrpcChannel.ForAddress(URL);
+            storagesIdToClient.Add(server_id, new StorageService.StorageServiceClient(storageChannel));
         }
 
         private void StartApp(string input, string app_file)

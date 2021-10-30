@@ -123,7 +123,7 @@ namespace Worker
 
         static void Main(string[] args)
         {
-            int port = Int32.Parse(args[2]);
+            int port = Int32.Parse(args[1].Split(':')[2]);
 
             Console.WriteLine("Starting Server on Port: " + port);
 
