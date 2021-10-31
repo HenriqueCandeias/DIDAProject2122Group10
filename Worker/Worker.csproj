@@ -24,7 +24,7 @@
   <ItemGroup>
     <Protobuf Include="protos\Scheduler.proto" GrpcServices="Server" />
     <Protobuf Include="protos\Storage.proto" GrpcServices="Both" />
-	<Protobuf Include="protos\Worker.proto" GrpcServices="Server" />
+	<Protobuf Include="protos\Worker.proto" GrpcServices="Both" />
   </ItemGroup>
 
 	<ItemGroup>

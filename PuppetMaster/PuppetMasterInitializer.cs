@@ -76,7 +76,7 @@ namespace PuppetMaster
             schedulerClient.SendNodesURL(schedulerRequest);
 
             //Inform Workers about URLs
-
+    
             Worker.SendNodesURLRequest workersRequest = new Worker.SendNodesURLRequest();
 
             workersRequest.Workers.Add(workersIdToURL);
@@ -226,6 +226,26 @@ namespace PuppetMaster
             request.Operators.Add(operators);
 
             schedulerClient.StartApp(request);
+        }
+
+        public void RequestStatus()
+        {
+            Scheduler.StatusRequest schedulerStatusRequest = new Scheduler.StatusRequest();
+
+            schedulerClient.Status(schedulerStatusRequest);
+
+            Worker.StatusRequest workerStatusRequest = new Worker.StatusRequest();
+
+            foreach (WorkerService.WorkerServiceClient worker in workersIdToClient.Values)
+                worker.Status(workerStatusRequest);
+
+            Storage.StatusRequest storageStatusRequest = new Storage.StatusRequest();
+
+            foreach (StorageService.StorageServiceClient storage in storagesIdToClient.Values)
+                storage.Status(storageStatusRequest);
+
+            //TODO print PuppterMaster status if necessary
+
         }
     }
 }

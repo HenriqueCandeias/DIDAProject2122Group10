@@ -4,6 +4,7 @@ package storage;
 
 service StorageService {
 	rpc SendNodesURL(SendNodesURLRequest) returns (SendNodesURLReply);
+	rpc Status(StatusRequest) returns (StatusReply);
 }
 
 message SendNodesURLRequest {
@@ -12,5 +13,13 @@ message SendNodesURLRequest {
 }
 
 message SendNodesURLReply {
+
+}
+
+message StatusRequest {
+
+}
+
+message StatusReply {
 
 }

@@ -12,9 +12,7 @@ namespace Scheduler
     {
         private int executionId = 0;
 
-        private List<string> workersId = new List<string>();
-
-
+        private Queue<string> workersId = new Queue<string>();
 
         private Dictionary<string, string> workersIdToURL = new Dictionary<string, string>();
 
@@ -30,6 +28,7 @@ namespace Scheduler
             {
                 workersIdToURL.Add(key, request.Workers.GetValueOrDefault(key));
                 Console.WriteLine("Worker: " + key + " URL: " + workersIdToURL.GetValueOrDefault(key));
+                workersId.Enqueue(key);
             }
 
             foreach (string key in request.Storages.Keys)
@@ -56,12 +55,12 @@ namespace Scheduler
 
         public StartAppReply StartApp(StartAppRequest request)
         {
-            Console.WriteLine("Received the following perators:");
+            Console.WriteLine("Received the following operators:");
             foreach (KeyValuePair<int, string> pair in request.Operators)
                 Console.WriteLine("operator " + pair.Value + " " + pair.Key);
 
             List<DIDAAssignment> chain = GenerateChain(request.Operators);
-
+            
             Worker.StartAppRequest startAppRequest = new Worker.StartAppRequest()
             {
                 DidaRequest = new DIDARequest()
@@ -96,21 +95,35 @@ namespace Scheduler
 
             Console.WriteLine(operators);
 
-            DIDAAssignment uniqueAssignment = new DIDAAssignment()
+            string nextWorkerId;
+            foreach (KeyValuePair<int, string> pair in operators)
             {
-                Operator = new DIDAOperatorID()
-                {
-                    Classname = operators[0],
-                    Order = 0,
-                },
-                Host = workersIdToURL.GetValueOrDefault("2").Split(':')[0] + ":" + workersIdToURL.GetValueOrDefault("2").Split(':')[1],
-                Port = Int32.Parse(workersIdToURL.GetValueOrDefault("2").Split(':')[2]),
-                Output = "",
-            };
+                nextWorkerId = workersId.Dequeue();
 
-            chain.Add(uniqueAssignment);
+                DIDAAssignment didaAssignment = new DIDAAssignment()
+                {
+                    Operator = new DIDAOperatorID()
+                    {
+                        Classname = pair.Value,
+                        Order = pair.Key,
+                    },
+                    Host = workersIdToURL.GetValueOrDefault(nextWorkerId).Split(':')[0] + ":" + workersIdToURL.GetValueOrDefault(nextWorkerId).Split(':')[1],
+                    Port = Int32.Parse(workersIdToURL.GetValueOrDefault(nextWorkerId).Split(':')[2]),
+                    Output = "",
+                };
+
+                workersId.Enqueue(nextWorkerId);
+
+                chain.Add(didaAssignment);
+            }
 
             return chain;
+        }
+
+        public StatusReply Status()
+        {
+            //TODO display necessary info
+            return new StatusReply();
         }
     }
 }

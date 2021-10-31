@@ -8,7 +8,7 @@ namespace Storage
 {
     class StorageServer : StorageService.StorageServiceBase
     {
-        private StorageDomain domain = new StorageDomain();
+        private StorageInterface domain = new StorageInterface();
 
         public override Task<SendNodesURLReply> SendNodesURL(SendNodesURLRequest request, ServerCallContext context)
         {
@@ -33,6 +33,11 @@ namespace Storage
         public override Task<PingWSReply> PingWS(PingWSRequest request, ServerCallContext context)
         {
             return Task.FromResult<PingWSReply>(domain.Ping(request));
+        }
+
+        public override Task<StatusReply> Status(StatusRequest request, ServerCallContext context)
+        {
+            return Task.FromResult<StatusReply>(domain.Status());
         }
 
     }

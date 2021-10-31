@@ -22,5 +22,10 @@ namespace Scheduler
         {
             return Task.FromResult<StartAppReply>(domain.StartApp(request));
         }
+
+        public override Task<StatusReply> Status(StatusRequest request, ServerCallContext context)
+        {
+            return Task.FromResult<StatusReply>(domain.Status()); 
+        }
     }
 }

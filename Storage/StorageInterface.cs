@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Storage
 {
-    class StorageDomain
+    class StorageInterface
     {
         public StorageImpl mStorage = new StorageImpl();
 
@@ -91,6 +91,12 @@ namespace Storage
             {
                 Ok = 1,
             };
+        }
+
+        public StatusReply Status()
+        {
+            //TODO display necessary info
+            return new StatusReply();
         }
     }
 }

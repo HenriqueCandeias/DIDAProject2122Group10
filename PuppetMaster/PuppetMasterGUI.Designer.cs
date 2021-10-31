@@ -75,7 +75,7 @@ namespace PuppetMaster
             this.OutputLabel.TabIndex = 3;
             this.OutputLabel.Text = "Output";
             // 
-            // RunButton
+            // LoadFileButton
             // 
             this.RunButton.Location = new System.Drawing.Point(552, 38);
             this.RunButton.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
