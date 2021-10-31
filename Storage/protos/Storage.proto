@@ -9,6 +9,8 @@ service StorageService {
 	rpc WriteStorage (WriteStorageRequest) returns (WriteStorageReply);
 	rpc UpdateIf (UpdateIfRequest) returns (UpdateIfReply);
 	rpc Status(StatusRequest) returns (StatusReply);
+	rpc List(ListRequest) returns (ListReply);
+	rpc Crash(CrashRequest) returns (CrashReply);
 }
 
 //// structures ////
@@ -59,6 +61,22 @@ message StatusRequest {
 }
 
 message StatusReply {
+
+}
+
+message ListRequest {
+
+}
+
+message ListReply {
+
+}
+
+message CrashRequest {
+
+}
+
+message CrashReply{
 
 }
 

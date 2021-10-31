@@ -124,7 +124,22 @@ namespace Worker
         public StatusReply Status()
         {
             //TODO display necessary info
+            Console.WriteLine("Status: I'm alive");
             return new StatusReply();
+        }
+
+        public ListReply ListObjects()
+        {
+            //TODO actually list the objects stored here
+            Console.WriteLine("Listing");
+            return new ListReply();
+        }
+
+        public CrashReply Crash()
+        {
+            //TODO stop the server
+            System.Environment.Exit(1);
+            return new CrashReply();
         }
     }
 }

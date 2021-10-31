@@ -30,6 +30,11 @@ namespace PuppetMaster
         private Dictionary<string, StorageService.StorageServiceClient> storagesIdToClient = new Dictionary<string, StorageService.StorageServiceClient>();
 
         private bool nodesAreInformed = false;
+        public enum Action
+        {
+            List,
+            Crash,
+        }
 
         public PuppetMasterInitializer()
         {
@@ -130,12 +135,15 @@ namespace PuppetMaster
                     break;
 
                 case "status":
+                    Status();
                     break;
 
                 case "listServer":
+                    ServerFinder(words[1], Action.List);
                     break;
 
                 case "listGlobal":
+                    ServerGlobal(Action.List);
                     break;
 
                 case "debug":
@@ -143,6 +151,11 @@ namespace PuppetMaster
                     break;
 
                 case "crash":
+                    ServerFinder(words[1], Action.Crash);
+                    break;
+
+                case "crashAll":
+                    ServerGlobal(Action.Crash);
                     break;
 
                 case "wait":
@@ -228,7 +241,7 @@ namespace PuppetMaster
             schedulerClient.StartApp(request);
         }
 
-        public void RequestStatus()
+        public void Status()
         {
             Scheduler.StatusRequest schedulerStatusRequest = new Scheduler.StatusRequest();
 
@@ -246,6 +259,128 @@ namespace PuppetMaster
 
             //TODO print PuppterMaster status if necessary
 
+        }
+
+
+        /// <summary>
+        /// Executes given action to all servers
+        /// </summary>
+        /// <param name="action"></param>
+        public void ServerGlobal(Action action)
+        {
+            if (action == Action.List)
+            {
+                ListScheduler("0");
+            }
+            else
+            {
+                CrashScheduler("0");
+            }
+
+            foreach (String workerId in workersIdToClient.Keys)
+            {
+                if (action == Action.List)
+                {
+                    ListWorker(workerId);
+                }
+                else
+                {
+                    CrashWorker(workerId);
+                }
+            }
+
+            foreach(String storageId in storagesIdToClient.Keys)
+            {
+                if (action == Action.List)
+                {
+                    ListStorage(storageId);
+                }
+                else
+                {
+                    CrashStorage(storageId);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Finds a server with a specific ID and executed the given action
+        /// </summary>
+        /// <param name="serverId"></param>
+        /// <param name="action"></param>
+        public void ServerFinder(string serverId, Action action)
+        {
+            if (workersIdToClient.ContainsKey(serverId))
+            {
+                if(action == Action.List)
+                {
+                    ListWorker(serverId);
+                } 
+                else
+                {
+                    CrashWorker(serverId);
+                }
+
+            } else if (storagesIdToClient.ContainsKey(serverId))
+            {
+                if (action == Action.List)
+                {
+                    ListStorage(serverId);
+                }
+                else
+                {
+                    CrashStorage(serverId);
+                }
+            } else
+            {
+                if (action == Action.List)
+                {
+                    ListScheduler(serverId);
+                }
+                else
+                {
+                    CrashScheduler(serverId);
+                }
+            }
+                
+        }
+
+        //LIST COMMAND
+        public void ListWorker(string serverId)
+        {
+            Worker.ListRequest listRequest = new Worker.ListRequest();
+            workersIdToClient[serverId].List(listRequest);
+        }
+
+        public void ListStorage(string serverId)
+        {
+            Storage.ListRequest listRequest = new Storage.ListRequest();
+            storagesIdToClient[serverId].List(listRequest);
+        }
+
+        public void ListScheduler(string serverId)
+        {
+            Scheduler.ListRequest listRequest = new Scheduler.ListRequest();
+            schedulerClient.List(listRequest);
+        }
+
+
+        //CRASH COMMAND
+        public void CrashWorker(string serverId)
+        {
+            Worker.CrashRequest crashRequest = new Worker.CrashRequest();
+            workersIdToClient[serverId].Crash(crashRequest);
+        }
+
+        public void CrashStorage(string serverId)
+        {
+            Storage.CrashRequest crashRequest = new Storage.CrashRequest();
+            storagesIdToClient[serverId].Crash(crashRequest);
+        }
+
+        public void CrashScheduler(string serverId)
+        {
+            Scheduler.CrashRequest crashRequest = new Scheduler.CrashRequest();
+            schedulerClient.Crash(crashRequest);
         }
     }
 }

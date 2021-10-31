@@ -14,6 +14,7 @@ using DIDAStorage;
 
 namespace Worker
 {
+
     class WorkerMain
     {
         static void Main(string[] args)
