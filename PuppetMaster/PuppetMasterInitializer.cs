@@ -3,6 +3,7 @@ using Pcs;
 using Scheduler;
 using Storage;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -14,6 +15,8 @@ namespace PuppetMaster
     public class PuppetMasterInitializer
     {
         private const int pcsServerPort = 10000;
+
+        private ConcurrentDictionary<string, AutoResetEvent> serverIdToHandle = new ConcurrentDictionary<string, AutoResetEvent>();
 
         private bool debug = false;
 
@@ -39,11 +42,6 @@ namespace PuppetMaster
         public PuppetMasterInitializer()
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
-            //This function is only used to run the system in a single machine
-            
-            
-            //InformNodesAboutURL();
         }
 
         public void StartPCS()
@@ -97,17 +95,46 @@ namespace PuppetMaster
             switch (words[0])
             {
                 case "scheduler":
+
                     StartScheduler(words[1], words[2]);
+                    /*
+                    serverIdToHandle.AddOrUpdate(words[1], new AutoResetEvent(false), (serverId, oldHandler) => new AutoResetEvent(false));
+                    new Thread(() =>
+                    {
+                        StartScheduler(words[1], words[2]);
+                        serverIdToHandle.GetValueOrDefault(words[1]).Set();
+                    });
+                    */
                     return;
 
                 case "worker":
+
                     StartWorker(words[1], words[2]);
+                    /*
+                    serverIdToHandle.AddOrUpdate(words[1], new AutoResetEvent(false), (serverId, oldHandler) => new AutoResetEvent(false));
+                    new Thread(() =>
+                    {
+                        StartWorker(words[1], words[2]);
+                        serverIdToHandle.GetValueOrDefault(words[1]).Set();
+                    });
+                    */
                     return;
 
                 case "storage":
+
                     StartStorage(words[1], words[2]);
+                    /*
+                    serverIdToHandle.AddOrUpdate(words[1], new AutoResetEvent(false), (serverId, oldHandler) => new AutoResetEvent(false));
+                    new Thread(() =>
+                    {
+                        StartStorage(words[1], words[2]);
+                        serverIdToHandle.GetValueOrDefault(words[1]).Set();
+                    });
+                    */
                     return;
             }
+
+            //WaitForServerCreation();
 
             if (!nodesAreInformed)
             {
@@ -117,7 +144,7 @@ namespace PuppetMaster
 
             switch (words[0])
             {
-               case "client":
+                case "client":
                     StartApp(words[1], words[2]);
                     break;
 
@@ -152,6 +179,13 @@ namespace PuppetMaster
                     Thread.Sleep(Int32.Parse(words[1]));
                     break;
             }
+        }
+
+        private void WaitForServerCreation()
+        {
+            List<AutoResetEvent> handlesList = new List<AutoResetEvent>(serverIdToHandle.Values);
+            AutoResetEvent[] handlesArray = handlesList.ToArray();
+            WaitHandle.WaitAll(handlesArray);
         }
 
         public void StartScheduler(string server_id, string URL)
@@ -223,8 +257,15 @@ namespace PuppetMaster
 
             string appFileContent = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\" + app_file;
 
-            foreach (string line in File.ReadLines(appFileContent))
-                operators.Add(Int32.Parse(line.Split(' ')[2]), line.Split(' ')[1]);
+            try
+            {
+                foreach (string line in File.ReadLines(appFileContent))
+                    operators.Add(Int32.Parse(line.Split(' ')[2]), line.Split(' ')[1]);
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine("File not found: " + app_file);
+            }
 
             request.Operators.Add(operators);
 

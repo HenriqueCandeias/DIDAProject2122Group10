@@ -121,7 +121,7 @@ namespace Worker
                 //TODO: O WORKER NAO PODE BLOQUEAR AQUI. TALVEZ USAR TASK!
                 Console.WriteLine("I'm going to send the following request to the next worker:");
                 Console.WriteLine(request);
-                nextWorkerClient.StartApp(request);
+                nextWorkerClient.StartApp(request);  //nextWorkerClient.StartAppAsync(request);
                 Console.WriteLine("Request sent.");
             }
 

@@ -4,4 +4,3 @@ worker wo0 http://localhost:10004
 worker wo1 http://localhost:10005
 worker wo2 http://localhost:10006
 wait 2000
-client 10 app

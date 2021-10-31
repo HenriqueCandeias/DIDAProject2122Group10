@@ -33,16 +33,31 @@ namespace PuppetMaster
                 Ports = { new ServerPort("localhost", puppetMasterPort, ServerCredentials.Insecure) }
             };
             server.Start();
+
+            //This function is only used to run the system in a single machine
             initializer.StartPCS();
         }
 
-        private void RunButton_Click(object sender, EventArgs e)
+        private void ExecuteButton_Click(object sender, EventArgs e)
         {
+            inputFile.Text = "";
             initializer.Execute(CommandsInputBox.Text);
             CommandsInputBox.Clear();
         }
 
-        private void Load_Click(object sender, EventArgs e)
+        private void ExecuteNextButton_Click(object sender, EventArgs e)
+        {
+            if (currentCommand == commands.Count)
+            {
+                return;
+            }
+            initializer.Execute(commands[currentCommand]);
+            commands[currentCommand] += " -> done";
+            currentCommand += 1;
+            inputFile.Text = string.Join("\r\n", commands.ToArray());
+        }
+
+        private void LoadFileButton_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFileDialog1 = new OpenFileDialog();
 
@@ -55,7 +70,7 @@ namespace PuppetMaster
 
                 foreach (string line in System.IO.File.ReadLines(fileName))
                 {
-                    if (line != null) 
+                    if (line != null)
                     {
                         commands.Add(line);
                     }
@@ -65,19 +80,7 @@ namespace PuppetMaster
             }
         }
 
-        private void Execute_Click(object sender, EventArgs e)
-        {
-            if (currentCommand == commands.Count)
-            {
-                return;
-            }
-            initializer.Execute(commands[currentCommand]);
-            commands[currentCommand] += " -> done";
-            currentCommand += 1;
-            inputFile.Text = string.Join("\r\n", commands.ToArray());
-        }
-
-        private void RunAll_Click(object sender, EventArgs e)
+        private void RunAllButton_Click(object sender, EventArgs e)
         {
             inputFile.Text = "";
 

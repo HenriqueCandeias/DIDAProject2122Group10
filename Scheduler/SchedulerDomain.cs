@@ -80,7 +80,7 @@ namespace Scheduler
 
             string firstWorkerURL = startAppRequest.DidaRequest.Chain[0].Host + ":" + startAppRequest.DidaRequest.Chain[0].Port.ToString();
 
-            workersURLToClient.GetValueOrDefault(firstWorkerURL).StartApp(startAppRequest);
+            workersURLToClient.GetValueOrDefault(firstWorkerURL).StartApp(startAppRequest); //workersURLToClient.GetValueOrDefault(firstWorkerURL).StartAppAsync(startAppRequest);
 
             Console.WriteLine("Sent DIDARequest to worker.");
 
