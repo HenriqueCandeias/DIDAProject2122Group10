@@ -48,6 +48,7 @@ namespace PuppetMaster
                 string strfilename = openFileDialog1.FileName;
 
                 commands = new List<string>();
+                currentCommand = 0;
 
                 foreach (string line in System.IO.File.ReadLines(strfilename))
                 {
