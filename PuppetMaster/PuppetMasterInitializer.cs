@@ -29,18 +29,19 @@ namespace PuppetMaster
 
         private Dictionary<string, StorageService.StorageServiceClient> storagesIdToClient = new Dictionary<string, StorageService.StorageServiceClient>();
 
+        private bool nodesAreInformed = false;
 
-        public void Start()
+        public PuppetMasterInitializer()
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
             //This function is only used to run the system in a single machine
-            StartPCS();
-            ReadStartupCommands();
-            InformNodesAboutURL();
+            
+            
+            //InformNodesAboutURL();
         }
 
-        private void StartPCS()
+        public void StartPCS()
         {
             ProcessStartInfo p_info = new ProcessStartInfo
             {
@@ -53,7 +54,7 @@ namespace PuppetMaster
             Process.Start(p_info);
         }
 
-        private void ReadStartupCommands()
+        public void ReadStartupCommands()
         {
             string systemConfigurationFile = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\SystemConfig.txt";
 
@@ -111,8 +112,17 @@ namespace PuppetMaster
                 case "storage":
                     StartStorage(words[1], words[2]);
                     break;
+            }
 
-                case "client":
+            if (!nodesAreInformed)
+            {
+                InformNodesAboutURL();
+                nodesAreInformed = true;
+            }
+
+            switch (words[0])
+            {
+               case "client":
                     StartApp(words[1], words[2]);
                     break;
 
