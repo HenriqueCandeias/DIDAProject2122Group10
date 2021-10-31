@@ -3,19 +3,29 @@ using System.Collections.Generic;
 using System.Text;
 using DIDAWorker;
 
-namespace Worker
+namespace DIDAOperator
 {
     class DummyOperator : IDIDAOperator
     {
         IDIDAStorage storageProxy;
-        public void ConfigureStorage(IDIDAStorage storageProxy)
+        void IDIDAOperator.ConfigureStorage(IDIDAStorage storageProxy)
         {
             this.storageProxy = storageProxy;
         }
 
-        public string ProcessRecord(DIDAWorker.DIDAMetaRecord meta, string input, string previousOperatorOutput)
+        string IDIDAOperator.ProcessRecord(DIDAWorker.DIDAMetaRecord meta, string input, string previousOperatorOutput)
         {
-            string myOutput = (Int32.Parse(previousOperatorOutput) + 1).ToString();
+            Console.WriteLine("Entered ProcessRecord");
+            int num = 0;
+
+            if (!String.IsNullOrEmpty(previousOperatorOutput))
+                num = Int32.Parse(previousOperatorOutput);
+
+            Console.WriteLine("num=" + num);
+
+            string myOutput = (num + 1).ToString();
+
+            Console.WriteLine("myoutput calculated: " + myOutput);
 
             return myOutput;
         }

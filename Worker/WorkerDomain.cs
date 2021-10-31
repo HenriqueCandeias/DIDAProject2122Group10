@@ -9,6 +9,7 @@ using System.IO;
 using System.Reflection;
 using Grpc.Net.Client;
 using Worker;
+using DIDAOperator;
 
 namespace Worker
 {
@@ -67,24 +68,61 @@ namespace Worker
                 });
             }
 
+            Console.WriteLine("created List<DIDAStorageNode>");
+
             myOperator.ConfigureStorage(new StorageProxy(storagesURL.ToArray(), didaMetaRecord));
 
-            string output = myOperator.ProcessRecord(didaMetaRecord, request.DidaRequest.Input, request.DidaRequest.Chain[request.DidaRequest.Next - 1].Output);
-            request.DidaRequest.Chain[request.DidaRequest.Next].Output = output;
+            Console.WriteLine("ConfigureStorage");
 
-            request.DidaRequest.Next = request.DidaRequest.Next++;
+            string previousOutput = "";
+            if (request.DidaRequest.Next - 1 >= 0)
+                previousOutput = request.DidaRequest.Chain[request.DidaRequest.Next - 1].Output;
+
+            Console.WriteLine("previous output: " + previousOutput);
+
+            string output = myOperator.ProcessRecord(didaMetaRecord, request.DidaRequest.Input, previousOutput);
+
+            Console.WriteLine("ProcessRecord");
+
+            StartAppRequest nextWorkerRequest = new StartAppRequest()
+            {
+                DidaRequest = new DIDARequest()
+                {
+                    DidaMetaRecord = new DIDAMetaRecord()
+                    {
+                        Id = request.DidaRequest.DidaMetaRecord.Id,
+                        // other metadata to be specified by the students
+                    },
+                    Input = request.DidaRequest.Input,
+                    Next = request.DidaRequest.Next++,
+                    ChainSize = request.DidaRequest.ChainSize,
+                },
+            };
+
+            nextWorkerRequest.DidaRequest.Chain.Add(request.DidaRequest.Chain);
+            nextWorkerRequest.DidaRequest.Chain[request.DidaRequest.Next - 1].Output = output;
+
+            //////request.DidaRequest.Chain[request.DidaRequest.Next].Output = output;
+
+            Console.WriteLine("Created chain");
+
+            //////request.DidaRequest.Next = request.DidaRequest.Next++;
             
             if (request.DidaRequest.Next < request.DidaRequest.ChainSize)
             {
+                Console.WriteLine("GrpcChannel nextWorkerChannel");
                 //TALVEZ SEJA PRECISO USAR O ARG. ORDER PARA OBTER OS DIDAASSIGNMENT CERTOS
                 GrpcChannel nextWorkerChannel = GrpcChannel.ForAddress(
                     request.DidaRequest.Chain[request.DidaRequest.Next].Host + ":" + request.DidaRequest.Chain[request.DidaRequest.Next].Port);
                 WorkerService.WorkerServiceClient nextWorkerClient = new WorkerService.WorkerServiceClient(nextWorkerChannel);
 
+                Console.WriteLine("Going to send to the worker: " + request.DidaRequest.Chain[request.DidaRequest.Next].Host + ":" + request.DidaRequest.Chain[request.DidaRequest.Next].Port);
+
                 //TODO: O WORKER NAO PODE BLOQUEAR AQUI. TALVEZ USAR TASK!
                 Console.WriteLine("I'm going to send the following request to the next worker:");
                 Console.WriteLine(request);
                 nextWorkerClient.StartApp(request);
+                Console.WriteLine("Request sent.");
             }
 
             return new StartAppReply();
@@ -93,31 +131,33 @@ namespace Worker
         static IDIDAOperator LoadByReflection(string className)
         {
             IDIDAOperator _objLoadedByReflection;
-
-            foreach (string filename in Directory.EnumerateFiles(Directory.GetCurrentDirectory()))
+            try 
             {
-                Console.WriteLine("file in cwd: " + Path.GetFileName(filename));
-                if (filename.EndsWith(".dll"))
+                foreach (string filename in Directory.EnumerateFiles(
+                    Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Worker\\bin\\Debug\\netcoreapp3.1\\"))
                 {
-                    Console.WriteLine("File is a dll...Let's look at it's contained types...");
-                    Assembly _dll = Assembly.LoadFrom(filename);
-                    Type[] _typeList = _dll.GetTypes();
-                    foreach (Type type in _typeList)
+                    if (filename.EndsWith(".dll"))
                     {
-                        Console.WriteLine("type contained in dll: " + type.Name);
-                        if (type.Name == className)
+                        Assembly _dll = Assembly.LoadFrom(filename);
+                        Type[] _typeList = _dll.GetTypes();
+
+                        foreach (Type type in _typeList)
                         {
-                            Console.WriteLine("Found type to load dynamically: " + className);
-                            _objLoadedByReflection = (IDIDAOperator)Activator.CreateInstance(type);
-                            foreach (MethodInfo method in type.GetMethods())
+                            if (type.Name == className)
                             {
-                                Console.WriteLine("method from class " + className + ": " + method.Name);
+                                Console.WriteLine("Found type to load dynamically: " + className);
+                                _objLoadedByReflection = (IDIDAOperator)Activator.CreateInstance(type);
+
+                                return _objLoadedByReflection;
                             }
-                            return _objLoadedByReflection;
                         }
                     }
                 }
+            } catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
             }
+
             return null;
         }
 

@@ -1,13 +1,13 @@
 ﻿using Grpc.Net.Client;
 using Pcs;
 using Scheduler;
-using Worker;
-using System;
 using Storage;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using Worker;
 
 namespace PuppetMaster
 {
@@ -59,16 +59,6 @@ namespace PuppetMaster
             Process.Start(p_info);
         }
 
-        public void ReadStartupCommands()
-        {
-            string systemConfigurationFile = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\SystemConfig.txt";
-
-            foreach (string line in System.IO.File.ReadLines(systemConfigurationFile))
-            {
-                Execute(line);
-            }
-        }
-
         private void InformNodesAboutURL()
         {
             //Inform Scheduler about URLs
@@ -108,15 +98,15 @@ namespace PuppetMaster
             {
                 case "scheduler":
                     StartScheduler(words[1], words[2]);
-                    break;
+                    return;
 
                 case "worker":
                     StartWorker(words[1], words[2]);
-                    break;
+                    return;
 
                 case "storage":
                     StartStorage(words[1], words[2]);
-                    break;
+                    return;
             }
 
             if (!nodesAreInformed)

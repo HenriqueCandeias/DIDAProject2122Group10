@@ -21,6 +21,9 @@ namespace PuppetMaster
 
         private List<string> commands = new List<string>();
         private int currentCommand = 0;
+
+        string fileName = null;
+
         public PuppetMasterGUI()
         {
             InitializeComponent();
@@ -43,14 +46,14 @@ namespace PuppetMaster
         {
             OpenFileDialog openFileDialog1 = new OpenFileDialog();
 
-            if (openFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                string strfilename = openFileDialog1.FileName;
+                fileName = openFileDialog1.FileName;
 
                 commands = new List<string>();
                 currentCommand = 0;
 
-                foreach (string line in System.IO.File.ReadLines(strfilename))
+                foreach (string line in System.IO.File.ReadLines(fileName))
                 {
                     if (line != null) 
                     {
@@ -59,7 +62,6 @@ namespace PuppetMaster
                 }
 
                 inputFile.Text = string.Join("\r\n", commands.ToArray());
-
             }
         }
 
@@ -77,7 +79,20 @@ namespace PuppetMaster
 
         private void RunAll_Click(object sender, EventArgs e)
         {
-            initializer.ReadStartupCommands();
+            inputFile.Text = "";
+
+            if (fileName == null)
+            {
+                inputFile.Text = "Error: you have to load a file with commands to execute.";
+                return;
+            }
+
+            foreach (string line in System.IO.File.ReadLines(fileName))
+            {
+                initializer.Execute(line);
+            }
+
+            inputFile.Text = "All commands applied sucessfully.\r\n";
         }
     }
 }
