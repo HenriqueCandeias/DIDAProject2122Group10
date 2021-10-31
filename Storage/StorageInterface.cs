@@ -7,11 +7,18 @@ namespace Storage
 {
     class StorageInterface
     {
-        public StorageImpl mStorage = new StorageImpl();
+        private int gossipDelay;
+
+        public StorageImpl mStorage;
 
         private Dictionary<string, string> workersIdToURL = new Dictionary<string, string>();
 
         private Dictionary<string, string> storagesIdToURL = new Dictionary<string, string>();
+
+        public StorageInterface(int gossip_delay)
+        {
+            mStorage = new StorageImpl(gossip_delay);
+        }
 
         public SendNodesURLReply SendNodesURL(SendNodesURLRequest request)
         {

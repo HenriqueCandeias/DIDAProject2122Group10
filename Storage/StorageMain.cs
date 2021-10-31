@@ -14,11 +14,13 @@ namespace Storage
         {
             int port = Int32.Parse(args[1].Split(':')[2]);
 
+            int gossip_delay = Int32.Parse(args[2]);
+
             Console.WriteLine("Starting Storage Server on Port: " + port);
 
             Server server = new Server
             {
-                Services = { StorageService.BindService(new StorageServer()) },
+                Services = { StorageService.BindService(new StorageServer(gossip_delay)) },
                 Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) },
             };
 

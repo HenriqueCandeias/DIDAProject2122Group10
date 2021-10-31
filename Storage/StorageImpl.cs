@@ -7,11 +7,13 @@ namespace Storage
 {
     public class StorageImpl : DIDAStorage.IDIDAStorage
     {
-        public Dictionary<string, DIDARecord> valueStorage;
+        private int gossipDelay;
 
-        public StorageImpl()
+        public Dictionary<string, DIDARecord> valueStorage = new Dictionary<string, DIDARecord>();
+
+        public StorageImpl(int gossip_delay)
         {
-            valueStorage = new Dictionary<string, DIDARecord>();
+            gossipDelay = gossip_delay;
         }
 
         public DIDARecord read(string id, DIDAVersion version)

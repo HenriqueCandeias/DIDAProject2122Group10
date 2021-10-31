@@ -21,6 +21,8 @@ message StartWorkerRequest {
 	string serverId = 1;
 	string url = 2;
 	int32 gossipDelay = 3;
+	bool debugActive = 4;
+	string puppetMasterURL = 5;
 }
 
 message StartWorkerReply {

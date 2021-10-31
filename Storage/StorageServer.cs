@@ -8,7 +8,12 @@ namespace Storage
 {
     class StorageServer : StorageService.StorageServiceBase
     {
-        private StorageInterface domain = new StorageInterface();
+        private StorageInterface domain;
+
+        public StorageServer(int gossip_delay)
+        {
+            domain = new StorageInterface(gossip_delay);
+        }
 
         public override Task<SendNodesURLReply> SendNodesURL(SendNodesURLRequest request, ServerCallContext context)
         {

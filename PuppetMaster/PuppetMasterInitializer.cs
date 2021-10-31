@@ -1,4 +1,5 @@
-﻿using Grpc.Net.Client;
+﻿using Grpc.Core;
+using Grpc.Net.Client;
 using Pcs;
 using Scheduler;
 using Storage;
@@ -14,11 +15,15 @@ namespace PuppetMaster
 {
     public class PuppetMasterInitializer
     {
+        private string puppetMasterHost = "http://localhost";
+        
+        private const int puppetMasterPort = 10001;
+
         private const int pcsServerPort = 10000;
 
         private ConcurrentDictionary<string, AutoResetEvent> serverIdToHandle = new ConcurrentDictionary<string, AutoResetEvent>();
 
-        private bool debug = false;
+        private bool debugActive = false;
 
         private Dictionary<string, string> schedulerIdToURL = new Dictionary<string, string>();
 
@@ -94,6 +99,10 @@ namespace PuppetMaster
             string[] words = command.Split(' ');
             switch (words[0])
             {
+                case "debug":
+                    StartDebugging();
+                    return;
+
                 case "scheduler":
 
                     StartScheduler(words[1], words[2]);
@@ -109,7 +118,7 @@ namespace PuppetMaster
 
                 case "worker":
 
-                    StartWorker(words[1], words[2]);
+                    StartWorker(words[1], words[2], words[3]);
                     /*
                     serverIdToHandle.AddOrUpdate(words[1], new AutoResetEvent(false), (serverId, oldHandler) => new AutoResetEvent(false));
                     new Thread(() =>
@@ -122,7 +131,7 @@ namespace PuppetMaster
 
                 case "storage":
 
-                    StartStorage(words[1], words[2]);
+                    StartStorage(words[1], words[2], words[3]);
                     /*
                     serverIdToHandle.AddOrUpdate(words[1], new AutoResetEvent(false), (serverId, oldHandler) => new AutoResetEvent(false));
                     new Thread(() =>
@@ -163,10 +172,6 @@ namespace PuppetMaster
                     ServerGlobal(Action.List);
                     break;
 
-                case "debug":
-                    debug = !debug;
-                    break;
-
                 case "crash":
                     ServerFinder(words[1], Action.Crash);
                     break;
@@ -186,6 +191,18 @@ namespace PuppetMaster
             List<AutoResetEvent> handlesList = new List<AutoResetEvent>(serverIdToHandle.Values);
             AutoResetEvent[] handlesArray = handlesList.ToArray();
             WaitHandle.WaitAll(handlesArray);
+        }
+
+        private void StartDebugging()
+        {
+            Server server = new Server
+            {
+                Services = { PuppetMasterService.BindService(new PuppetMasterServer()) },
+                Ports = { new ServerPort(puppetMasterHost, puppetMasterPort, ServerCredentials.Insecure) }
+            };
+            server.Start();
+
+            debugActive = true;
         }
 
         public void StartScheduler(string server_id, string URL)
@@ -208,7 +225,7 @@ namespace PuppetMaster
             schedulerClient = new SchedulerService.SchedulerServiceClient(schedulerChannel);
         }
 
-        public void StartWorker(string server_id, string URL)
+        public void StartWorker(string server_id, string URL, string gossip_delay)
         {
             workersIdToURL.Add(server_id, URL);
 
@@ -216,6 +233,9 @@ namespace PuppetMaster
             {
                 ServerId = server_id,
                 Url = URL,
+                GossipDelay = Int32.Parse(gossip_delay),
+                DebugActive = debugActive,
+                PuppetMasterURL = puppetMasterHost + ":" + puppetMasterPort,
             };
 
             GrpcChannel pcsChannel = GrpcChannel.ForAddress(URL.Split(':')[0] + ":" + URL.Split(':')[1] + ":" + pcsServerPort.ToString());
@@ -227,7 +247,7 @@ namespace PuppetMaster
             workersIdToClient.Add(server_id, new WorkerService.WorkerServiceClient(workerChannel));
         }
 
-        public void StartStorage(string server_id, string URL)
+        public void StartStorage(string server_id, string URL, string gossip_delay)
         {
             storagesIdToURL.Add(server_id, URL);
 
@@ -235,6 +255,7 @@ namespace PuppetMaster
             {
                 ServerId = server_id,
                 Url = URL,
+                GossipDelay = Int32.Parse(gossip_delay),
             };
 
             GrpcChannel pcsChannel = GrpcChannel.ForAddress(URL.Split(':')[0] + ":" + URL.Split(':')[1] + ":" + pcsServerPort.ToString());

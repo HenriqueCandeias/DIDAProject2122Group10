@@ -15,9 +15,19 @@ namespace Worker
 {
     class WorkerDomain
     {
+        private int gossipDelay;
+
+        private string puppetMasterURL;
+
         private Dictionary<string, string> workersIdToURL = new Dictionary<string, string>();
 
         private Dictionary<string, string> storagesIdToURL = new Dictionary<string, string>();
+
+        public WorkerDomain(int gossip_delay, string puppet_master_URL)
+        {
+            gossipDelay = gossip_delay;
+            puppetMasterURL = puppet_master_URL;
+        }
 
         public SendNodesURLReply SendNodesURL(SendNodesURLRequest request)
         {

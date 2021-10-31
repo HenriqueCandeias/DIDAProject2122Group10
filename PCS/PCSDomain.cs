@@ -43,9 +43,13 @@ namespace PCS
                 Arguments = request.ServerId + " " + request.Url + " " + request.GossipDelay,
             };
 
+            if (request.DebugActive)
+                p_info.Arguments += " " + request.PuppetMasterURL;
+
             Process.Start(p_info);
 
-            Console.WriteLine("Worker created. URL: " + request.Url + " Id: " + request.ServerId + ".");
+            Console.WriteLine("Worker created. URL: " + request.Url + " Id: " + request.ServerId + 
+                " Gossip Delay: " + request.GossipDelay + " Debug Active: " + request.DebugActive.ToString() + ".");
 
             return new StartWorkerReply();
         }
@@ -64,7 +68,7 @@ namespace PCS
 
             Process.Start(p_info);
 
-            Console.WriteLine("Storage created. URL: " + request.Url + " Id: " + request.ServerId + ".");
+            Console.WriteLine("Storage created. URL: " + request.Url + " Id: " + request.ServerId + " Gossip Delay: " + request.GossipDelay + ".");
 
             return new StartStorageReply();
         }

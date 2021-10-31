@@ -8,7 +8,12 @@ namespace Worker
 {
     class WorkerServer : WorkerService.WorkerServiceBase
     {
-        WorkerDomain domain = new WorkerDomain(); 
+        WorkerDomain domain;
+
+        public WorkerServer(int gossip_delay, string puppet_master_URL)
+        {
+            domain = new WorkerDomain(gossip_delay, puppet_master_URL);
+        }
 
         public override Task<SendNodesURLReply> SendNodesURL(SendNodesURLRequest request, ServerCallContext context)
         {

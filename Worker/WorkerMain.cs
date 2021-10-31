@@ -21,11 +21,17 @@ namespace Worker
         {
             int port = Int32.Parse(args[1].Split(':')[2]);
 
+            int gossip_delay = Int32.Parse(args[2]);
+
+            string puppet_master_URL = "";
+            if (args.Length == 4)
+                puppet_master_URL = args[3];
+
             Console.WriteLine("Starting Server on Port: " + port);
 
             Server server = new Server
             {
-                Services = { WorkerService.BindService(new WorkerServer()) },
+                Services = { WorkerService.BindService(new WorkerServer(gossip_delay, puppet_master_URL)) },
                 Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) },
             };
 

@@ -13,8 +13,6 @@ namespace PuppetMaster
 {
     public partial class PuppetMasterGUI : Form
     {
-        public const int puppetMasterPort = 10001;
-
         public PuppetMasterInitializer initializer = new PuppetMasterInitializer();
 
         public Server server;
@@ -27,13 +25,7 @@ namespace PuppetMaster
         public PuppetMasterGUI()
         {
             InitializeComponent();
-            server = new Server
-            {
-                Services = { PuppetMasterService.BindService(new PuppetMasterServer()) },
-                Ports = { new ServerPort("localhost", puppetMasterPort, ServerCredentials.Insecure) }
-            };
-            server.Start();
-
+            
             //This function is only used to run the system in a single machine
             initializer.StartPCS();
         }
