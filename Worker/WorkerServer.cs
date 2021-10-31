@@ -12,12 +12,12 @@ namespace Worker
 
         public override Task<SendNodesURLReply> SendNodesURL(SendNodesURLRequest request, ServerCallContext context)
         {
-            return Task.FromResult<SendNodesURLReply>(domain.SendNodesURLImpl(request));
+            return Task.FromResult<SendNodesURLReply>(domain.SendNodesURL(request));
         }
 
         public override Task<StartAppReply> StartApp(StartAppRequest request, ServerCallContext context)
         {
-            return Task.FromResult<StartAppReply>(domain.StartAppImpl(request));
+            return Task.FromResult<StartAppReply>(domain.StartApp(request));
         }
 
         public override Task<StatusReply> Status(StatusRequest request, ServerCallContext context)

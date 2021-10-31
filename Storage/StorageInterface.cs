@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Storage
 {
-    class StorageDomain
+    class StorageInterface
     {
         public StorageImpl mStorage = new StorageImpl();
 

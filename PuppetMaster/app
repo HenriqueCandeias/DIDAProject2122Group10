@@ -1,5 +1,3 @@
-﻿operator A 0
-operator B 1
-operator D 3
-operator C 2
-operator E 4
+﻿operator DummyOperator 0
+operator DummyOperator 1
+operator DummyOperator 2

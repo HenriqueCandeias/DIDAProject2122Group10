@@ -41,5 +41,21 @@ namespace PuppetMaster
             initializer.Execute(CommandsInputBox.Text);
             CommandsInputBox.Clear();
         }
+
+        private void PuppetMasterGUI_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void RunCommand_Click(object sender, EventArgs e)
+        {
+            initializer.Execute(CommandsInputBox.Text);
+            CommandsInputBox.Clear();
+        }
+
+        private void LoadFile_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
