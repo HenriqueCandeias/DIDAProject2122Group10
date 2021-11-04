@@ -10,9 +10,9 @@ namespace Storage
     {
         private StorageInterface domain;
 
-        public StorageServer(int gossip_delay)
+        public StorageServer(int gossip_delay, int replica_id)
         {
-            domain = new StorageInterface(gossip_delay);
+            domain = new StorageInterface(gossip_delay, replica_id);
         }
 
         public override Task<SendNodesURLReply> SendNodesURL(SendNodesURLRequest request, ServerCallContext context)
@@ -27,17 +27,13 @@ namespace Storage
 
         public override Task<WriteStorageReply> WriteStorage(WriteStorageRequest request, ServerCallContext context)
         {
+            Console.WriteLine("StorageServer.WriteStorage");
             return Task.FromResult<WriteStorageReply>(domain.WriteStorage(request));
         }
 
         public override Task<ReadStorageReply> ReadStorage(ReadStorageRequest request, ServerCallContext context)
         {
             return Task.FromResult<ReadStorageReply>(domain.ReadStorage(request));
-        }
-
-        public override Task<PingWSReply> PingWS(PingWSRequest request, ServerCallContext context)
-        {
-            return Task.FromResult<PingWSReply>(domain.Ping(request));
         }
 
         public override Task<StatusReply> Status(StatusRequest request, ServerCallContext context)

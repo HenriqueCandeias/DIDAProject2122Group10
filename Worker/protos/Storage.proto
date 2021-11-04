@@ -3,7 +3,6 @@
 package storage;
 
 service StorageService {
-	rpc PingWS(PingWSRequest) returns (PingWSReply);
 	rpc ReadStorage (ReadStorageRequest) returns (ReadStorageReply);
 	rpc WriteStorage (WriteStorageRequest) returns (WriteStorageReply);
 	rpc UpdateIf (UpdateIfRequest) returns (UpdateIfReply);
@@ -50,13 +49,4 @@ message UpdateIfRequest {
 
 message UpdateIfReply {
 	DidaVersion DidaVersion = 1;
-}
-
-// Other
-
-message PingWSRequest {
-}
-
-message PingWSReply {
-	int32 ok = 1;
 }

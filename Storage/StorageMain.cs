@@ -16,11 +16,13 @@ namespace Storage
 
             int gossip_delay = Int32.Parse(args[2]);
 
+            int replica_id = Int32.Parse(args[3]);
+
             Console.WriteLine("Starting Storage Server on Port: " + port);
 
             Server server = new Server
             {
-                Services = { StorageService.BindService(new StorageServer(gossip_delay)) },
+                Services = { StorageService.BindService(new StorageServer(gossip_delay, replica_id)) },
                 Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) },
             };
 

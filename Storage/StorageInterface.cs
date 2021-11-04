@@ -9,15 +9,15 @@ namespace Storage
     {
         private int gossipDelay;
 
-        public StorageImpl mStorage;
+        public StorageImpl storageImpl;
 
         private Dictionary<string, string> workersIdToURL = new Dictionary<string, string>();
 
         private Dictionary<string, string> storagesIdToURL = new Dictionary<string, string>();
 
-        public StorageInterface(int gossip_delay)
+        public StorageInterface(int gossip_delay, int replica_id)
         {
-            mStorage = new StorageImpl(gossip_delay);
+            storageImpl = new StorageImpl(gossip_delay, replica_id);
         }
 
         public SendNodesURLReply SendNodesURL(SendNodesURLRequest request)
@@ -39,7 +39,7 @@ namespace Storage
 
         public UpdateIfReply UpdateIf(UpdateIfRequest request)
         {
-            DIDAVersion reply = mStorage.updateIfValueIs(request.Id, request.OldValue, request.NewValue);
+            DIDAVersion reply = storageImpl.updateIfValueIs(request.Id, request.OldValue, request.NewValue);
 
             return new UpdateIfReply
             {
@@ -54,7 +54,8 @@ namespace Storage
 
         public WriteStorageReply WriteStorage(WriteStorageRequest request)
         {
-            DIDAVersion reply = mStorage.write(request.Id, request.Val);
+            Console.WriteLine("St.Interface.WriteStorage");
+            DIDAVersion reply = storageImpl.write(request.Id, request.Val);
 
             return new WriteStorageReply
             {
@@ -71,10 +72,10 @@ namespace Storage
             DIDAVersion didaversion = new DIDAVersion
             {
                 replicaId = request.DidaVersion.ReplicaId,
-                versionNumber = request.DidaVersion.VersionNumber
+                versionNumber = request.DidaVersion.VersionNumber,
             };
 
-            DIDARecord reply = mStorage.read(request.Id, didaversion);
+            DIDARecord reply = storageImpl.read(request.Id, didaversion);
 
             return new ReadStorageReply
             {
@@ -86,18 +87,10 @@ namespace Storage
                         VersionNumber = reply.version.versionNumber,
                         ReplicaId = reply.version.replicaId,
                     },
-                    Val = reply.val
-                }
+                    Val = reply.val,
+                },
             };
 
-        }
-
-        public PingWSReply Ping(PingWSRequest request)
-        {
-            return new PingWSReply
-            {
-                Ok = 1,
-            };
         }
 
         public StatusReply Status()

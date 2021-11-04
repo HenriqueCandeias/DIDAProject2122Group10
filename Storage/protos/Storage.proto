@@ -3,11 +3,10 @@
 package storage;
 
 service StorageService {
-	rpc SendNodesURL(SendNodesURLRequest) returns (SendNodesURLReply);
-	rpc PingWS(PingWSRequest) returns (PingWSReply);
 	rpc ReadStorage (ReadStorageRequest) returns (ReadStorageReply);
 	rpc WriteStorage (WriteStorageRequest) returns (WriteStorageReply);
 	rpc UpdateIf (UpdateIfRequest) returns (UpdateIfReply);
+	rpc SendNodesURL(SendNodesURLRequest) returns (SendNodesURLReply);
 	rpc Status(StatusRequest) returns (StatusReply);
 	rpc List(ListRequest) returns (ListReply);
 	rpc Crash(CrashRequest) returns (CrashReply);
@@ -78,15 +77,6 @@ message CrashRequest {
 
 message CrashReply{
 
-}
-
-// Other
-
-message PingWSRequest {
-}
-
-message PingWSReply {
-	int32 ok = 1;
 }
 
 message SendNodesURLRequest {
