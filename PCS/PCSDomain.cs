@@ -19,6 +19,7 @@ namespace PCS
                 UseShellExecute = true,
                 CreateNoWindow = false,
                 WindowStyle = ProcessWindowStyle.Normal,
+                RedirectStandardError = true,
                 FileName = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Scheduler\\bin\\Debug\\netcoreapp3.1\\Scheduler.exe",
 
                 Arguments = request.ServerId + " " + request.Url,
@@ -38,6 +39,7 @@ namespace PCS
                 UseShellExecute = true,
                 CreateNoWindow = false,
                 WindowStyle = ProcessWindowStyle.Normal,
+                RedirectStandardError = true,
                 FileName = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Worker\\bin\\Debug\\netcoreapp3.1\\Worker.exe",
 
                 Arguments = request.ServerId + " " + request.Url + " " + request.GossipDelay,
@@ -61,14 +63,17 @@ namespace PCS
                 UseShellExecute = true,
                 CreateNoWindow = false,
                 WindowStyle = ProcessWindowStyle.Normal,
+                RedirectStandardError = true,
                 FileName = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Storage\\bin\\Debug\\netcoreapp3.1\\Storage.exe",
 
-                Arguments = request.ServerId + " " + request.Url + " " + request.GossipDelay,
+                Arguments = request.ServerId + " " + request.Url + " " + request.GossipDelay + " " + request.ReplicaId,
             };
 
             Process.Start(p_info);
 
-            Console.WriteLine("Storage created. URL: " + request.Url + " Id: " + request.ServerId + " Gossip Delay: " + request.GossipDelay + ".");
+            Console.WriteLine(
+                "Storage created. URL: " + request.Url + " Id: " + request.ServerId + " Gossip Delay: " + request.GossipDelay + " Replica Id:" + request.ReplicaId + "."
+            );
 
             return new StartStorageReply();
         }

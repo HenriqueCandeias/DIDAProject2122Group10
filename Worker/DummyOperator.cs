@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using DIDAWorker;
+using Storage;
 
 namespace DIDAOperator
 {
@@ -26,6 +27,17 @@ namespace DIDAOperator
             string myOutput = (num + 1).ToString();
 
             Console.WriteLine("myoutput calculated: " + myOutput);
+
+            Console.WriteLine("Going to write my output in the only storage.");
+
+            DIDAVersion newVersion = storageProxy.write(new DIDAWriteRequest
+            {
+                Id = "myRecord",
+                Val = myOutput,
+            });
+
+            Console.Write("Wrote my output successfully. Got this DIDAVersion:");
+            Console.Write(newVersion.ToString());
 
             return myOutput;
         }

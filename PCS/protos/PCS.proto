@@ -33,6 +33,7 @@ message StartStorageRequest {
 	string serverId = 1;
 	string url = 2;
 	int32 gossipDelay = 3;
+	int32 replicaId = 4;
 }
 
 message StartStorageReply {

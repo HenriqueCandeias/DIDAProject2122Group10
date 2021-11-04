@@ -15,15 +15,15 @@ namespace PuppetMaster
 {
     public class PuppetMasterInitializer
     {
+        //Communication
+
         private string puppetMasterHost = "http://localhost";
         
         private const int puppetMasterPort = 10001;
 
         private const int pcsServerPort = 10000;
 
-        private ConcurrentDictionary<string, AutoResetEvent> serverIdToHandle = new ConcurrentDictionary<string, AutoResetEvent>();
-
-        private bool debugActive = false;
+        //Id to URL
 
         private Dictionary<string, string> schedulerIdToURL = new Dictionary<string, string>();
 
@@ -31,13 +31,22 @@ namespace PuppetMaster
 
         private Dictionary<string, string> storagesIdToURL = new Dictionary<string, string>();
 
+        //Id to gRPC client
+
         private SchedulerService.SchedulerServiceClient schedulerClient;
 
         private Dictionary<string, WorkerService.WorkerServiceClient> workersIdToClient = new Dictionary<string, WorkerService.WorkerServiceClient>();
 
         private Dictionary<string, StorageService.StorageServiceClient> storagesIdToClient = new Dictionary<string, StorageService.StorageServiceClient>();
 
+        //Other
+
+        private bool debugActive = false;
+
         private bool nodesAreInformed = false;
+
+        private int highestReplicaId = -1;
+
         public enum Action
         {
             List,
@@ -104,46 +113,17 @@ namespace PuppetMaster
                     return;
 
                 case "scheduler":
-
                     StartScheduler(words[1], words[2]);
-                    /*
-                    serverIdToHandle.AddOrUpdate(words[1], new AutoResetEvent(false), (serverId, oldHandler) => new AutoResetEvent(false));
-                    new Thread(() =>
-                    {
-                        StartScheduler(words[1], words[2]);
-                        serverIdToHandle.GetValueOrDefault(words[1]).Set();
-                    });
-                    */
                     return;
 
                 case "worker":
-
                     StartWorker(words[1], words[2], words[3]);
-                    /*
-                    serverIdToHandle.AddOrUpdate(words[1], new AutoResetEvent(false), (serverId, oldHandler) => new AutoResetEvent(false));
-                    new Thread(() =>
-                    {
-                        StartWorker(words[1], words[2]);
-                        serverIdToHandle.GetValueOrDefault(words[1]).Set();
-                    });
-                    */
                     return;
 
                 case "storage":
-
                     StartStorage(words[1], words[2], words[3]);
-                    /*
-                    serverIdToHandle.AddOrUpdate(words[1], new AutoResetEvent(false), (serverId, oldHandler) => new AutoResetEvent(false));
-                    new Thread(() =>
-                    {
-                        StartStorage(words[1], words[2]);
-                        serverIdToHandle.GetValueOrDefault(words[1]).Set();
-                    });
-                    */
                     return;
             }
-
-            //WaitForServerCreation();
 
             if (!nodesAreInformed)
             {
@@ -184,13 +164,6 @@ namespace PuppetMaster
                     Thread.Sleep(Int32.Parse(words[1]));
                     break;
             }
-        }
-
-        private void WaitForServerCreation()
-        {
-            List<AutoResetEvent> handlesList = new List<AutoResetEvent>(serverIdToHandle.Values);
-            AutoResetEvent[] handlesArray = handlesList.ToArray();
-            WaitHandle.WaitAll(handlesArray);
         }
 
         private void StartDebugging()
@@ -251,11 +224,14 @@ namespace PuppetMaster
         {
             storagesIdToURL.Add(server_id, URL);
 
+            highestReplicaId++;
+
             StartStorageRequest request = new StartStorageRequest()
             {
                 ServerId = server_id,
                 Url = URL,
                 GossipDelay = Int32.Parse(gossip_delay),
+                ReplicaId = highestReplicaId,
             };
 
             GrpcChannel pcsChannel = GrpcChannel.ForAddress(URL.Split(':')[0] + ":" + URL.Split(':')[1] + ":" + pcsServerPort.ToString());
