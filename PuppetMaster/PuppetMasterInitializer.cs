@@ -294,11 +294,7 @@ namespace PuppetMaster
         {
             foreach (String workerId in workersIdToClient.Keys)
             {
-                if (action == Action.List)
-                {
-                    ListWorker(workerId);
-                }
-                else
+                if (action == Action.Crash)
                 {
                     CrashWorker(workerId);
                 }
@@ -322,15 +318,7 @@ namespace PuppetMaster
         {
             if (workersIdToClient.ContainsKey(serverId))
             {
-                if(action == Action.List)
-                {
-                    ListWorker(serverId);
-                } 
-                else
-                {
                     CrashWorker(serverId);
-                }
-
             } else if (storagesIdToClient.ContainsKey(serverId))
             {
                 if (action == Action.List)
@@ -346,11 +334,6 @@ namespace PuppetMaster
         }
 
         //LIST COMMAND
-        public void ListWorker(string serverId)
-        {
-            Worker.ListRequest listRequest = new Worker.ListRequest();
-            workersIdToClient[serverId].List(listRequest);
-        }
 
         public void ListStorage(string serverId)
         {

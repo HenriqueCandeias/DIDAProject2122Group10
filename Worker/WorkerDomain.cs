@@ -178,13 +178,6 @@ namespace Worker
             return new StatusReply();
         }
 
-        public ListReply ListObjects()
-        {
-            //TODO actually list the objects stored here
-            Console.WriteLine("Listing");
-            return new ListReply();
-        }
-
         public CrashReply Crash()
         {
             Task.Delay(1000).ContinueWith(t => System.Environment.Exit(1));

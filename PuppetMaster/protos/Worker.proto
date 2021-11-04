@@ -5,7 +5,6 @@ package worker;
 service WorkerService {
 	rpc SendNodesURL(SendNodesURLRequest) returns (SendNodesURLReply);
 	rpc Status(StatusRequest) returns (StatusReply);
-	rpc List(ListRequest) returns (ListReply);
 	rpc Crash(CrashRequest) returns (CrashReply);
 }
 
@@ -23,14 +22,6 @@ message StatusRequest {
 }
 
 message StatusReply {
-
-}
-
-message ListRequest {
-
-}
-
-message ListReply {
 
 }
 
