@@ -27,10 +27,5 @@ namespace Scheduler
         {
             return Task.FromResult<StatusReply>(domain.Status()); 
         }
-
-        public override Task<ListReply> List(ListRequest request, ServerCallContext context)
-        {
-            return Task.FromResult<ListReply>(domain.ListObjects());
-        }
     }
 }

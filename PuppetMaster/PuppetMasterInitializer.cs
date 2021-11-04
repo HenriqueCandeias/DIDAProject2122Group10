@@ -292,11 +292,6 @@ namespace PuppetMaster
         /// Executes given action to all servers
         public void ServerGlobal(Action action)
         {
-            if (action == Action.List)
-            {
-                ListScheduler("0");
-            }
-
             foreach (String workerId in workersIdToClient.Keys)
             {
                 if (action == Action.List)
@@ -346,12 +341,6 @@ namespace PuppetMaster
                 {
                     CrashStorage(serverId);
                 }
-            } else
-            {
-                if (action == Action.List)
-                {
-                    ListScheduler(serverId);
-                }
             }
                 
         }
@@ -368,13 +357,6 @@ namespace PuppetMaster
             Storage.ListRequest listRequest = new Storage.ListRequest();
             storagesIdToClient[serverId].List(listRequest);
         }
-
-        public void ListScheduler(string serverId)
-        {
-            Scheduler.ListRequest listRequest = new Scheduler.ListRequest();
-            schedulerClient.List(listRequest);
-        }
-
 
         //CRASH COMMAND
         public void CrashWorker(string serverId)

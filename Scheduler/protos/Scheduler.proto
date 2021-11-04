@@ -6,7 +6,6 @@ service SchedulerService {
 	rpc SendNodesURL(SendNodesURLRequest) returns (SendNodesURLReply);
 	rpc StartApp(StartAppRequest) returns (StartAppReply);
 	rpc Status(StatusRequest) returns (StatusReply);
-	rpc List(ListRequest) returns (ListReply);
 }
 
 message SendNodesURLRequest {
@@ -32,13 +31,5 @@ message StatusRequest {
 }
 
 message StatusReply {
-
-}
-
-message ListRequest {
-
-}
-
-message ListReply {
 
 }

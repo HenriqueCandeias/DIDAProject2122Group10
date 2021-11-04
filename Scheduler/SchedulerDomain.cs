@@ -126,10 +126,5 @@ namespace Scheduler
             Console.WriteLine("Status: I'm alive");
             return new StatusReply();
         }
-        public ListReply ListObjects()
-        {
-            //TODO actually list the objects stored here
-            return new ListReply();
-        }
     }
 }
