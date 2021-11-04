@@ -318,6 +318,7 @@ namespace PuppetMaster
         {
             if (workersIdToClient.ContainsKey(serverId))
             {
+                if(action == Action.Crash)
                     CrashWorker(serverId);
             } else if (storagesIdToClient.ContainsKey(serverId))
             {
