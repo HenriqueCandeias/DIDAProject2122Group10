@@ -13,7 +13,7 @@ namespace Storage
 
         private const int maxVersions = 3;
 
-        private Dictionary<string, List<DIDARecord>> recordIdToRecords = new Dictionary<string, List<DIDARecord>>();
+        public Dictionary<string, List<DIDARecord>> recordIdToRecords = new Dictionary<string, List<DIDARecord>>();
 
         private static readonly DIDARecord nullDIDARecord = new DIDARecord
         {

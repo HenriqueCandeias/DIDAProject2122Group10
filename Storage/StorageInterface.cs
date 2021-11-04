@@ -104,6 +104,13 @@ namespace Storage
         public ListReply ListObjects()
         {
             //TODO actually list the objects stored here
+            foreach(KeyValuePair<string, List<DIDARecord>> recordList in storageImpl.recordIdToRecords)
+            {
+                foreach(DIDARecord record in recordList.Value)
+                {
+                    Console.WriteLine("ID:" + record.id + " Val:" + record.val + " Version:" + record.version);
+                }
+            }
             return new ListReply();
         }
 
