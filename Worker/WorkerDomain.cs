@@ -187,8 +187,7 @@ namespace Worker
 
         public CrashReply Crash()
         {
-            //TODO stop the server
-            System.Environment.Exit(1);
+            Task.Delay(1000).ContinueWith(t => System.Environment.Exit(1));
             return new CrashReply();
         }
     }

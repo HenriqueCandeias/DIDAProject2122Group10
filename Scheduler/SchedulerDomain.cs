@@ -131,12 +131,5 @@ namespace Scheduler
             //TODO actually list the objects stored here
             return new ListReply();
         }
-
-        public CrashReply Crash()
-        {
-            //TODO stop the server
-            return new CrashReply();
-        }
-
     }
 }

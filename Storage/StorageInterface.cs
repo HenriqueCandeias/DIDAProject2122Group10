@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Storage
 {
@@ -115,7 +116,7 @@ namespace Storage
 
         public CrashReply Crash()
         {
-            //TODO stop the server
+            Task.Delay(1000).ContinueWith(t => System.Environment.Exit(1));
             return new CrashReply();
         }
     }

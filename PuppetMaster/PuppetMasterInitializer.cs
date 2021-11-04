@@ -313,20 +313,12 @@ namespace PuppetMaster
 
         }
 
-
-        /// <summary>
         /// Executes given action to all servers
-        /// </summary>
-        /// <param name="action"></param>
         public void ServerGlobal(Action action)
         {
             if (action == Action.List)
             {
                 ListScheduler("0");
-            }
-            else
-            {
-                CrashScheduler("0");
             }
 
             foreach (String workerId in workersIdToClient.Keys)
@@ -354,11 +346,7 @@ namespace PuppetMaster
             }
         }
 
-        /// <summary>
         /// Finds a server with a specific ID and executed the given action
-        /// </summary>
-        /// <param name="serverId"></param>
-        /// <param name="action"></param>
         public void ServerFinder(string serverId, Action action)
         {
             if (workersIdToClient.ContainsKey(serverId))
@@ -387,10 +375,6 @@ namespace PuppetMaster
                 if (action == Action.List)
                 {
                     ListScheduler(serverId);
-                }
-                else
-                {
-                    CrashScheduler(serverId);
                 }
             }
                 
@@ -427,12 +411,6 @@ namespace PuppetMaster
         {
             Storage.CrashRequest crashRequest = new Storage.CrashRequest();
             storagesIdToClient[serverId].Crash(crashRequest);
-        }
-
-        public void CrashScheduler(string serverId)
-        {
-            Scheduler.CrashRequest crashRequest = new Scheduler.CrashRequest();
-            schedulerClient.Crash(crashRequest);
         }
     }
 }

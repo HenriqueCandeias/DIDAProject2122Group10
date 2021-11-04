@@ -32,10 +32,5 @@ namespace Scheduler
         {
             return Task.FromResult<ListReply>(domain.ListObjects());
         }
-        
-        public override Task<CrashReply> Crash(CrashRequest request, ServerCallContext context)
-        {
-            return Task.FromResult<CrashReply>(domain.Crash());
-        }
     }
 }
