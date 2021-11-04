@@ -19,30 +19,37 @@ namespace Worker
     {
         static void Main(string[] args)
         {
-            int port = Int32.Parse(args[1].Split(':')[2]);
+            try {
+                int port = Int32.Parse(args[1].Split(':')[2]);
 
-            int gossip_delay = Int32.Parse(args[2]);
+                int gossip_delay = Int32.Parse(args[2]);
 
-            string puppet_master_URL = "";
-            if (args.Length == 4)
-                puppet_master_URL = args[3];
+                string puppet_master_URL = "";
+                if (args.Length == 4)
+                    puppet_master_URL = args[3];
 
-            Console.WriteLine("Starting Server on Port: " + port);
+                Console.WriteLine("Starting Server on Port: " + port);
 
-            Server server = new Server
+                Server server = new Server
+                {
+                    Services = { WorkerService.BindService(new WorkerServer(gossip_delay, puppet_master_URL)) },
+                    Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) },
+                };
+
+                server.Start();
+
+                Console.WriteLine("Started Server on Port: " + port);
+
+                Console.WriteLine("Press any key to stop the server Worker...");
+                Console.ReadKey();
+
+                server.ShutdownAsync().Wait();
+            }
+            catch (Exception e)
             {
-                Services = { WorkerService.BindService(new WorkerServer(gossip_delay, puppet_master_URL)) },
-                Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) },
-            };
-
-            server.Start();
-
-            Console.WriteLine("Started Server on Port: " + port);
-
-            Console.WriteLine("Press any key to stop the server Worker...");
-            Console.ReadKey();
-
-            server.ShutdownAsync().Wait();
+                Console.WriteLine("Exception in PCS:\r\n");
+                Console.WriteLine(e.ToString());
+            }
         }
     }
 }

@@ -15,23 +15,31 @@ namespace Scheduler
 
         static void Main(string[] args)
         {
-            int port = Int32.Parse(args[1].Split(':')[2]);
-
-            Console.WriteLine("Starting Scheduler Server on Port: " + port);
-
-            Server server = new Server
+            try
             {
-                Services = { SchedulerService.BindService(new SchedulerServer())},
-                Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) },
-            };
+                int port = Int32.Parse(args[1].Split(':')[2]);
 
-            server.Start();
+                Console.WriteLine("Starting Scheduler Server on Port: " + port);
 
-            Console.WriteLine("Started Scheduler Server on Port: " + port);
+                Server server = new Server
+                {
+                    Services = { SchedulerService.BindService(new SchedulerServer()) },
+                    Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) },
+                };
 
-            Console.WriteLine("Press any key to stop the server Scheduler...");
-            Console.ReadKey();
-            server.ShutdownAsync().Wait();
+                server.Start();
+
+                Console.WriteLine("Started Scheduler Server on Port: " + port);
+
+                Console.WriteLine("Press any key to stop the server Scheduler...");
+                Console.ReadKey();
+                server.ShutdownAsync().Wait();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Exception in PCS:\r\n");
+                Console.WriteLine(e.ToString());
+            }
         }
     }
 }

@@ -102,7 +102,7 @@ namespace Storage
 
             Console.WriteLine("Got the most recent record");
 
-            if (!mostRecentRecord.Equals(nullDIDARecord))
+            if (mostRecentRecord.Equals(nullDIDARecord))
                 recordIdToRecords.Add(id, new List<DIDARecord>());
 
             DIDAVersion newVersion = new DIDAVersion

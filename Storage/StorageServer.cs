@@ -28,7 +28,14 @@ namespace Storage
         public override Task<WriteStorageReply> WriteStorage(WriteStorageRequest request, ServerCallContext context)
         {
             Console.WriteLine("StorageServer.WriteStorage");
-            return Task.FromResult<WriteStorageReply>(domain.WriteStorage(request));
+            try
+            {
+                return Task.FromResult<WriteStorageReply>(domain.WriteStorage(request));
+            } catch(Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                return null;
+            }
         }
 
         public override Task<ReadStorageReply> ReadStorage(ReadStorageRequest request, ServerCallContext context)
