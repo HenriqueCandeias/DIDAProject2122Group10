@@ -24,20 +24,20 @@ namespace Worker
         public StorageProxy(DIDAStorageNode[] storageNodes, DIDAWorker.DIDAMetaRecord metaRecord)
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
             foreach (DIDAStorageNode n in storageNodes)
             {
-                Console.WriteLine("Going to create a client for the following node: serverId=" + n.serverId + " host=" + n.host + " port= " + n.port);
                 channels[n.serverId] = Grpc.Net.Client.GrpcChannel.ForAddress(n.host + ":" + n.port);
                 clients[n.serverId] = new StorageService.StorageServiceClient(channels[n.serverId]);
             }
-            Console.WriteLine("Dictionary: " + clients.ToString());
+
             meta = metaRecord;
         }
 
         // THE FOLLOWING 3 METHODS ARE THE ESSENCE OF A STORAGE PROXY
         // IN THIS EXAMPLE THEY ARE JUST CALLING THE STORAGE 
         // IN THE COMLPETE IMPLEMENTATION THEY NEED TO:
-        // 1) LOCATE THE RIGHT STORAGE SERVER
+        // 1) LOCATE THE RIGHT STORAGE SERVER,
         // 2) DEAL WITH FAILED STORAGE SERVERS
         // 3) CHECK IN THE METARECORD WHICH ARE THE PREVIOUSLY READ VERSIONS OF DATA 
         // 4) RECORD ACCESSED DATA INTO THE METARECORD
@@ -46,17 +46,25 @@ namespace Worker
         public virtual DIDAWorker.DIDARecordReply read(DIDAWorker.DIDAReadRequest r)
         {
             var res = clients["s1"].ReadStorage(new ReadStorageRequest { Id = r.Id, DidaVersion = new DidaVersion { VersionNumber = r.Version.VersionNumber, ReplicaId = r.Version.ReplicaId } });
+
+            Console.WriteLine(
+                "Read - new record is: ID: " + res.DidaRecord.Id + " Version Number: " + res.DidaRecord.DidaVersion.VersionNumber +
+                " Replica ID: " + res.DidaRecord.DidaVersion.ReplicaId + " Val: " + res.DidaRecord.Val
+            );
+
             return new DIDAWorker.DIDARecordReply { Id = "1", Val = "1", Version = { VersionNumber = 1, ReplicaId = 1 } };
         }
 
         // this dummy solution assumes there is a single storage server called "s1"
         public virtual DIDAWorker.DIDAVersion write(DIDAWorker.DIDAWriteRequest r)
         {
-            Console.WriteLine("Entered proxy.write");
-            var cenas = clients["s1"];
-            Console.WriteLine("TEST");
             var res = clients["s1"].WriteStorage(new WriteStorageRequest { Id = r.Id, Val = r.Val });
-            Console.WriteLine("Got this res: " + res.ToString());
+
+            Console.WriteLine(
+                "Write - new version is: Version Number: " + res.DidaVersion.VersionNumber +
+                " Replica ID: " + res.DidaVersion.ReplicaId
+            );
+
             return new DIDAWorker.DIDAVersion { VersionNumber = res.DidaVersion.VersionNumber, ReplicaId = res.DidaVersion.ReplicaId };
         }
 
@@ -64,6 +72,12 @@ namespace Worker
         public virtual DIDAWorker.DIDAVersion updateIfValueIs(DIDAWorker.DIDAUpdateIfRequest r)
         {
             var res = clients["s1"].UpdateIf(new UpdateIfRequest { Id = r.Id, NewValue = r.Newvalue, OldValue = r.Oldvalue });
+
+            Console.WriteLine(
+                "UpdateIf - new version is: Version Number: " + res.DidaVersion.VersionNumber +
+                " Replica ID: " + res.DidaVersion.ReplicaId
+            );
+
             return new DIDAWorker.DIDAVersion { VersionNumber = res.DidaVersion.VersionNumber, ReplicaId = res.DidaVersion.ReplicaId };
         }
     }

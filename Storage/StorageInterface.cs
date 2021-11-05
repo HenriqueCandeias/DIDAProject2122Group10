@@ -55,7 +55,6 @@ namespace Storage
 
         public WriteStorageReply WriteStorage(WriteStorageRequest request)
         {
-            Console.WriteLine("St.Interface.WriteStorage");
             DIDAVersion reply = storageImpl.write(request.Id, request.Val);
 
             return new WriteStorageReply

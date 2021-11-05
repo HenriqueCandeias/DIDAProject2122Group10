@@ -78,21 +78,13 @@ namespace Worker
                 });
             }
 
-            Console.WriteLine("created List<DIDAStorageNode>");
-
             myOperator.ConfigureStorage(new StorageProxy(storagesURL.ToArray(), didaMetaRecord));
-
-            Console.WriteLine("ConfigureStorage");
 
             string previousOutput = "";
             if (request.DidaRequest.Next - 1 >= 0)
                 previousOutput = request.DidaRequest.Chain[request.DidaRequest.Next - 1].Output;
 
-            Console.WriteLine("previous output: " + previousOutput);
-
             string output = myOperator.ProcessRecord(didaMetaRecord, request.DidaRequest.Input, previousOutput);
-
-            Console.WriteLine("ProcessRecord");
 
             StartAppRequest nextWorkerRequest = new StartAppRequest()
             {
@@ -111,25 +103,16 @@ namespace Worker
 
             nextWorkerRequest.DidaRequest.Chain.Add(request.DidaRequest.Chain);
             nextWorkerRequest.DidaRequest.Chain[request.DidaRequest.Next - 1].Output = output;
-
-            //////request.DidaRequest.Chain[request.DidaRequest.Next].Output = output;
-
-            Console.WriteLine("Created chain");
-
-            //////request.DidaRequest.Next = request.DidaRequest.Next++;
             
             if (request.DidaRequest.Next < request.DidaRequest.ChainSize)
             {
-                Console.WriteLine("GrpcChannel nextWorkerChannel");
                 //TALVEZ SEJA PRECISO USAR O ARG. ORDER PARA OBTER OS DIDAASSIGNMENT CERTOS
                 GrpcChannel nextWorkerChannel = GrpcChannel.ForAddress(
                     request.DidaRequest.Chain[request.DidaRequest.Next].Host + ":" + request.DidaRequest.Chain[request.DidaRequest.Next].Port);
                 WorkerService.WorkerServiceClient nextWorkerClient = new WorkerService.WorkerServiceClient(nextWorkerChannel);
 
-                Console.WriteLine("Going to send to the worker: " + request.DidaRequest.Chain[request.DidaRequest.Next].Host + ":" + request.DidaRequest.Chain[request.DidaRequest.Next].Port);
-
-                //TODO: O WORKER NAO PODE BLOQUEAR AQUI. TALVEZ USAR TASK!
-                Console.WriteLine("I'm going to send the following request to the next worker:");
+                Console.WriteLine("Going to send to the worker "
+                    + request.DidaRequest.Chain[request.DidaRequest.Next].Host + ":" + request.DidaRequest.Chain[request.DidaRequest.Next].Port + " the following request: ");
                 Console.WriteLine(request);
                 nextWorkerClient.StartApp(request);  //nextWorkerClient.StartAppAsync(request);
                 Console.WriteLine("Request sent.");

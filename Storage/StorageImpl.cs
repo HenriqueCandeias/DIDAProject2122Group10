@@ -18,7 +18,11 @@ namespace Storage
         private static readonly DIDARecord nullDIDARecord = new DIDARecord
         {
             id = "",
-            version = nullDIDAVersion,
+            version = new DIDAVersion
+            {
+                versionNumber = -1,
+                replicaId = -1,
+            },
             val = "",
         };
 
@@ -77,16 +81,31 @@ namespace Storage
                         versionNumber = mostRecentRecord.version.versionNumber + 1,
                     };
 
-                    recordIdToRecords.GetValueOrDefault(id).Add(new DIDARecord
+                    DIDARecord newRecord = new DIDARecord
                     {
                         id = id,
                         version = newVersion,
                         val = newValue,
-                    });
+                    };
+
+                    recordIdToRecords.GetValueOrDefault(id).Add(newRecord);
+
+                    Console.WriteLine(
+                        "UpdateIfValueIs - new record is: ID: " + newRecord.id + " Version Number: " + newVersion.versionNumber +
+                        " Replica ID: " + newVersion.replicaId + " Val: " + newRecord.val
+                    );
 
                     if (recordIdToRecords.GetValueOrDefault(id).Count > maxVersions)
+                    {
+                        Console.WriteLine(
+                            "Remove old record:" +
+                            " id: " + recordIdToRecords.GetValueOrDefault(id)[0].id +
+                            " versionNumber: " + recordIdToRecords.GetValueOrDefault(id)[0].version.versionNumber +
+                            " replicaId: " + recordIdToRecords.GetValueOrDefault(id)[0].version.replicaId +
+                            " val: " + recordIdToRecords.GetValueOrDefault(id)[0].val
+                        );
                         recordIdToRecords.GetValueOrDefault(id).RemoveAt(0);
-
+                    }
                     return newVersion;
                 }
             }
@@ -96,11 +115,7 @@ namespace Storage
 
         public DIDAVersion write(string id, string val)
         {
-            Console.WriteLine("Going to write a new record.");
-
             DIDARecord mostRecentRecord = GetMostRecentRecord(id);
-
-            Console.WriteLine("Got the most recent record");
 
             if (mostRecentRecord.Equals(nullDIDARecord))
                 recordIdToRecords.Add(id, new List<DIDARecord>());
@@ -120,11 +135,22 @@ namespace Storage
 
             recordIdToRecords.GetValueOrDefault(id).Add(newRecord);
 
-            if (recordIdToRecords.GetValueOrDefault(id).Count > maxVersions)
-                recordIdToRecords.GetValueOrDefault(id).RemoveAt(0);
+            Console.WriteLine(
+                "Write - new record is: ID: " + newRecord.id + " Version Number: " + newVersion.versionNumber +
+                " Replica ID: " + newVersion.replicaId + " Val: " + newRecord.val
+            );
 
-            Console.WriteLine("Write - new record is:");
-            Console.WriteLine(newRecord.ToString());
+            if (recordIdToRecords.GetValueOrDefault(id).Count > maxVersions)
+            {
+                Console.WriteLine(
+                    "Remove old record:" +
+                    " id: " + recordIdToRecords.GetValueOrDefault(id)[0].id +
+                    " versionNumber: " + recordIdToRecords.GetValueOrDefault(id)[0].version.versionNumber +
+                    " replicaId: " + recordIdToRecords.GetValueOrDefault(id)[0].version.replicaId +
+                    " val: " + recordIdToRecords.GetValueOrDefault(id)[0].val
+                );
+                recordIdToRecords.GetValueOrDefault(id).RemoveAt(0);
+            }
 
             return newVersion;
         }
