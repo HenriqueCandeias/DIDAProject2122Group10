@@ -17,22 +17,53 @@ namespace Worker
 
         public override Task<SendNodesURLReply> SendNodesURL(SendNodesURLRequest request, ServerCallContext context)
         {
-            return Task.FromResult<SendNodesURLReply>(domain.SendNodesURL(request));
+            try {
+                return Task.FromResult<SendNodesURLReply>(domain.SendNodesURL(request));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                throw e;
+            }
         }
 
         public override Task<StartAppReply> StartApp(StartAppRequest request, ServerCallContext context)
         {
-            return Task.FromResult<StartAppReply>(domain.StartApp(request));
+            try
+            {
+                return Task.FromResult<StartAppReply>(domain.StartApp(request));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                throw e;
+            }
         }
 
         public override Task<StatusReply> Status(StatusRequest request, ServerCallContext context)
         {
-            return Task.FromResult<StatusReply>(domain.Status());
+            try
+            {
+                return Task.FromResult<StatusReply>(domain.Status());
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                throw e;
+            }
         }
 
         public override Task<CrashReply> Crash(CrashRequest request, ServerCallContext context)
         {
-            return Task.FromResult<CrashReply>(domain.Crash());
+            try
+            {
+                return Task.FromResult<CrashReply>(domain.Crash());
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                throw e;
+            }
         }
     }
 }

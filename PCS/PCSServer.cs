@@ -12,17 +12,41 @@ namespace PCS
         PCSDomain domain = new PCSDomain();
         public override Task<StartSchedulerReply> StartScheduler(StartSchedulerRequest request, ServerCallContext context)
         {
-            return Task.FromResult<StartSchedulerReply>(domain.StartScheduler(request));
+            try
+            {
+                return Task.FromResult<StartSchedulerReply>(domain.StartScheduler(request));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                throw e;
+            }
         }
 
         public override Task<StartWorkerReply> StartWorker(StartWorkerRequest request, ServerCallContext context)
         {
-            return Task.FromResult<StartWorkerReply>(domain.StartWorker(request));
+            try
+            {
+                return Task.FromResult<StartWorkerReply>(domain.StartWorker(request));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                throw e;
+            }
         }
 
         public override Task<StartStorageReply> StartStorage(StartStorageRequest request, ServerCallContext context)
         {
-            return Task.FromResult<StartStorageReply>(domain.StartStorage(request));
+            try
+            {
+                return Task.FromResult<StartStorageReply>(domain.StartStorage(request));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                throw e;
+            }
         }
     }
 }
