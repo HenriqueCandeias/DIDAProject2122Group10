@@ -24,23 +24,23 @@ namespace DIDAOperator
             string myOutput = (num + 1).ToString();
 
             //Storage Tests
-
+            
             storageProxy.write(new DIDAWriteRequest
             {
-                Id = "myRecord",
+                Id = "ty",
                 Val = myOutput,
             });
-            /*
+            
             storageProxy.read(new DIDAReadRequest
             {
-                Id = "BANAN",
+                Id = "ty",
                 Version = new DIDAVersion
                 {
                     VersionNumber = -1,
                     ReplicaId = -1,
                 }
             });
-            */
+            /*
             storageProxy.read(new DIDAReadRequest
             {
                 Id = "myRecord",
@@ -50,14 +50,14 @@ namespace DIDAOperator
                     ReplicaId = 0,
                 }
             });
-            
+            */
             storageProxy.updateIfValueIs(new DIDAUpdateIfRequest
             {
-                Id = "myRecord",
+                Id = "a",
                 Oldvalue = "3",
                 Newvalue = "5",
             });
-
+            
             Console.WriteLine("DummyOperator: Wrote my output successfully.");
 
             return myOutput;

@@ -1,7 +1,14 @@
 scheduler sch0 http://localhost:10002
-storage s1 http://localhost:10003 0
 worker wo0 http://localhost:10004 0
 worker wo1 http://localhost:10005 0
 worker wo2 http://localhost:10006 0
 worker wo3 http://localhost:10007 0
+storage s1 http://localhost:10008 0
+storage s2 http://localhost:10009 0
+storage s3 http://localhost:10010 0
+storage s4 http://localhost:10011 0
+storage s5 http://localhost:10012 0
+storage s6 http://localhost:10013 0
+storage s7 http://localhost:10014 0
+storage s8 http://localhost:10015 0
 wait 2000
