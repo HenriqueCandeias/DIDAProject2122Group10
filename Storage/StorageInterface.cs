@@ -134,5 +134,11 @@ namespace Storage
             Task.Delay(1000).ContinueWith(t => System.Environment.Exit(1));
             return new CrashReply();
         }
+
+        public PopulateReply Populate(PopulateRequest request)
+        {
+            storageImpl.write(request.Id, request.Val);
+            return new Storage.PopulateReply();
+        }
     }
 }

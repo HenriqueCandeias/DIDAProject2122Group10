@@ -10,6 +10,7 @@ service StorageService {
 	rpc Status(StatusRequest) returns (StatusReply);
 	rpc List(ListRequest) returns (ListReply);
 	rpc Crash(CrashRequest) returns (CrashReply);
+	rpc Populate(PopulateRequest) returns (PopulateReply);
 }
 
 //// structures ////
@@ -85,5 +86,14 @@ message SendNodesURLRequest {
 }
 
 message SendNodesURLReply {
+
+}
+
+message PopulateRequest {
+	string id = 1;
+	string val = 2;
+}
+
+message PopulateReply {
 
 }

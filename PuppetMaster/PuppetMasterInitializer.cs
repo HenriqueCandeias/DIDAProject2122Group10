@@ -138,6 +138,7 @@ namespace PuppetMaster
                     break;
 
                 case "populate":
+                    populate(words[1]);
                     break;
 
                 case "status":
@@ -257,7 +258,7 @@ namespace PuppetMaster
             try
             {
                 foreach (string line in File.ReadLines(appFileContent))
-                    operators.Add(Int32.Parse(line.Split(' ')[2]), line.Split(' ')[1]);
+                        operators.Add(Int32.Parse(line.Split(' ')[2]), line.Split(' ')[1]);
             }
             catch (FileNotFoundException)
             {
@@ -353,6 +354,25 @@ namespace PuppetMaster
         {
             Storage.CrashRequest crashRequest = new Storage.CrashRequest();
             storagesIdToClient[serverId].Crash(crashRequest);
+        }
+
+        public void populate(string data_file)
+        {
+            string dataPath = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\" + data_file;
+            foreach(string line in File.ReadAllLines(dataPath))
+            {
+                string[] data = line.Split(',');
+                Storage.PopulateRequest populateRequest = new Storage.PopulateRequest()
+                {
+                    Id = data[0],
+                    Val = data[1],
+                };
+                foreach(StorageService.StorageServiceClient client in storagesIdToClient.Values)
+                {
+                    client.Populate(populateRequest);
+                }
+            }
+
         }
     }
 }
