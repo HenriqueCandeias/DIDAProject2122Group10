@@ -105,5 +105,18 @@ namespace Storage
             }
         }
 
+        public override Task<PopulateReply> Populate(PopulateRequest request, ServerCallContext context)
+        {
+            try
+            {
+                return Task.FromResult<PopulateReply>(domain.Populate(request));
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                throw e;
+            }
+        }
+
     }
 }
