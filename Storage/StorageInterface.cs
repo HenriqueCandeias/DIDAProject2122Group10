@@ -16,6 +16,18 @@ namespace Storage
 
         private Dictionary<string, string> storagesIdToURL = new Dictionary<string, string>();
 
+        private static readonly ReadStorageReply nullReadStorageReply = new ReadStorageReply
+        {
+            DidaRecord = new DidaRecord
+            {
+                DidaVersion = new DidaVersion
+                {
+                    VersionNumber = -1,
+                    ReplicaId = -1,
+                },
+            },
+        };
+
         public StorageInterface(int gossip_delay, int replica_id)
         {
             storageImpl = new StorageImpl(gossip_delay, replica_id);
@@ -75,21 +87,25 @@ namespace Storage
                 versionNumber = request.DidaVersion.VersionNumber,
             };
 
-            DIDARecord reply = storageImpl.read(request.Id, didaversion);
+            DIDARecord record = storageImpl.read(request.Id, didaversion);
 
-            return new ReadStorageReply
-            {
-                DidaRecord = new DidaRecord
+            if (record.id.Equals("") && record.val.Equals(""))
+                return nullReadStorageReply;
+
+            else
+                return new ReadStorageReply
                 {
-                    Id = reply.id,
-                    DidaVersion = new DidaVersion
+                    DidaRecord = new DidaRecord
                     {
-                        VersionNumber = reply.version.versionNumber,
-                        ReplicaId = reply.version.replicaId,
+                        Id = record.id,
+                        DidaVersion = new DidaVersion
+                        {
+                            VersionNumber = record.version.versionNumber,
+                            ReplicaId = record.version.replicaId,
+                        },
+                        Val = record.val,
                     },
-                    Val = reply.val,
-                },
-            };
+                };
 
         }
 

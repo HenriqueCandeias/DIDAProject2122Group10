@@ -48,7 +48,7 @@ namespace Worker
             var res = clients["s1"].ReadStorage(new ReadStorageRequest { Id = r.Id, DidaVersion = new DidaVersion { VersionNumber = r.Version.VersionNumber, ReplicaId = r.Version.ReplicaId } });
 
             Console.WriteLine(
-                "Read - new record is: ID: " + res.DidaRecord.Id + " Version Number: " + res.DidaRecord.DidaVersion.VersionNumber +
+                "Read - the record is: ID: " + res.DidaRecord.Id + " Version Number: " + res.DidaRecord.DidaVersion.VersionNumber +
                 " Replica ID: " + res.DidaRecord.DidaVersion.ReplicaId + " Val: " + res.DidaRecord.Val
             );
 

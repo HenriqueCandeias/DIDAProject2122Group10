@@ -15,7 +15,7 @@ namespace Storage
 
         public Dictionary<string, List<DIDARecord>> recordIdToRecords = new Dictionary<string, List<DIDARecord>>();
 
-        private static readonly DIDARecord nullDIDARecord = new DIDARecord
+        public static readonly DIDARecord nullDIDARecord = new DIDARecord
         {
             id = "",
             version = new DIDAVersion
@@ -47,7 +47,6 @@ namespace Storage
             {
                 if(version.Equals(nullDIDAVersion))
                 {
-                    //Get the most recent version
                     return GetMostRecentRecord(id);
                 }
 
@@ -99,10 +98,10 @@ namespace Storage
                     {
                         Console.WriteLine(
                             "Remove old record:" +
-                            " id: " + recordIdToRecords.GetValueOrDefault(id)[0].id +
-                            " versionNumber: " + recordIdToRecords.GetValueOrDefault(id)[0].version.versionNumber +
-                            " replicaId: " + recordIdToRecords.GetValueOrDefault(id)[0].version.replicaId +
-                            " val: " + recordIdToRecords.GetValueOrDefault(id)[0].val
+                            " ID: " + recordIdToRecords.GetValueOrDefault(id)[0].id +
+                            " VersionNumber: " + recordIdToRecords.GetValueOrDefault(id)[0].version.versionNumber +
+                            " ReplicaId: " + recordIdToRecords.GetValueOrDefault(id)[0].version.replicaId +
+                            " Val: " + recordIdToRecords.GetValueOrDefault(id)[0].val
                         );
                         recordIdToRecords.GetValueOrDefault(id).RemoveAt(0);
                     }
@@ -144,10 +143,10 @@ namespace Storage
             {
                 Console.WriteLine(
                     "Remove old record:" +
-                    " id: " + recordIdToRecords.GetValueOrDefault(id)[0].id +
-                    " versionNumber: " + recordIdToRecords.GetValueOrDefault(id)[0].version.versionNumber +
-                    " replicaId: " + recordIdToRecords.GetValueOrDefault(id)[0].version.replicaId +
-                    " val: " + recordIdToRecords.GetValueOrDefault(id)[0].val
+                    " ID: " + recordIdToRecords.GetValueOrDefault(id)[0].id +
+                    " VersionNumber: " + recordIdToRecords.GetValueOrDefault(id)[0].version.versionNumber +
+                    " ReplicaId: " + recordIdToRecords.GetValueOrDefault(id)[0].version.replicaId +
+                    " Val: " + recordIdToRecords.GetValueOrDefault(id)[0].val
                 );
                 recordIdToRecords.GetValueOrDefault(id).RemoveAt(0);
             }
@@ -162,13 +161,7 @@ namespace Storage
             if (didaRecords == null)
                 return nullDIDARecord;
 
-            DIDARecord mostRecentRecord = new DIDARecord
-            {
-                version = new DIDAVersion
-                {
-                    versionNumber = 0,
-                },
-            };
+            DIDARecord mostRecentRecord = didaRecords[0];
 
             foreach (DIDARecord record in didaRecords)
             {

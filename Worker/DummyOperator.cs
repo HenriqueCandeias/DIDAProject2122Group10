@@ -30,7 +30,17 @@ namespace DIDAOperator
                 Id = "myRecord",
                 Val = myOutput,
             });
-
+            /*
+            storageProxy.read(new DIDAReadRequest
+            {
+                Id = "BANAN",
+                Version = new DIDAVersion
+                {
+                    VersionNumber = -1,
+                    ReplicaId = -1,
+                }
+            });
+            */
             storageProxy.read(new DIDAReadRequest
             {
                 Id = "myRecord",
@@ -40,17 +50,7 @@ namespace DIDAOperator
                     ReplicaId = 0,
                 }
             });
-
-            storageProxy.read(new DIDAReadRequest
-            {
-                Id = "noSuchRecord",
-                Version = new DIDAVersion
-                {
-                    VersionNumber = 3,
-                    ReplicaId = 0,
-                }
-            });
-
+            
             storageProxy.updateIfValueIs(new DIDAUpdateIfRequest
             {
                 Id = "myRecord",
