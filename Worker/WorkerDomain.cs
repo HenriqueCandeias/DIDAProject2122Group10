@@ -63,10 +63,17 @@ namespace Worker
                 return new StartAppReply();
             }
 
-            DIDAWorker.DIDAMetaRecord didaMetaRecord = new DIDAWorker.DIDAMetaRecord();
-            didaMetaRecord.Id = request.DidaRequest.DidaMetaRecord.Id;
-            // other metadata to be specified by the students
-
+            DIDAMetaRecordConsistent metaRecordConsistent = new DIDAMetaRecordConsistent();
+            metaRecordConsistent.Id = request.DidaRequest.DidaMetaRecord.Id;
+            foreach (string recordId in request.DidaRequest.DidaMetaRecord.RecordIdToConsistentVersion.Keys)
+            {
+                metaRecordConsistent.RecordIdToConsistentVersion.Add(recordId, new DIDAWorker.DIDAVersion
+                {
+                    VersionNumber = request.DidaRequest.DidaMetaRecord.RecordIdToConsistentVersion[recordId].VersionNumber,
+                    ReplicaId = request.DidaRequest.DidaMetaRecord.RecordIdToConsistentVersion[recordId].ReplicaId,
+                });
+            }
+                
             List<DIDAStorageNode> storagesURL = new List<DIDAStorageNode>();
             foreach (KeyValuePair<string, string> pair in storagesIdToURL)
             {
@@ -78,13 +85,13 @@ namespace Worker
                 });
             }
 
-            myOperator.ConfigureStorage(new StorageProxy(storagesURL.ToArray(), didaMetaRecord));
+            myOperator.ConfigureStorage(new StorageProxy(storagesURL.ToArray(), metaRecordConsistent));
 
             string previousOutput = "";
             if (request.DidaRequest.Next - 1 >= 0)
                 previousOutput = request.DidaRequest.Chain[request.DidaRequest.Next - 1].Output;
 
-            string output = myOperator.ProcessRecord(didaMetaRecord, request.DidaRequest.Input, previousOutput);
+            string output = myOperator.ProcessRecord(metaRecordConsistent, request.DidaRequest.Input, previousOutput);
 
             StartAppRequest nextWorkerRequest = new StartAppRequest()
             {
@@ -93,7 +100,6 @@ namespace Worker
                     DidaMetaRecord = new DIDAMetaRecord()
                     {
                         Id = request.DidaRequest.DidaMetaRecord.Id,
-                        // other metadata to be specified by the students
                     },
                     Input = request.DidaRequest.Input,
                     Next = request.DidaRequest.Next++,
@@ -103,10 +109,17 @@ namespace Worker
 
             nextWorkerRequest.DidaRequest.Chain.Add(request.DidaRequest.Chain);
             nextWorkerRequest.DidaRequest.Chain[request.DidaRequest.Next - 1].Output = output;
-            
+            foreach (KeyValuePair<string, DIDAWorker.DIDAVersion> pair in metaRecordConsistent.RecordIdToConsistentVersion)
+            {
+                nextWorkerRequest.DidaRequest.DidaMetaRecord.RecordIdToConsistentVersion.Add(pair.Key, new DIDAVersion
+                {
+                    VersionNumber = pair.Value.VersionNumber,
+                    ReplicaId = pair.Value.ReplicaId,
+                });
+            }
+
             if (request.DidaRequest.Next < request.DidaRequest.ChainSize)
             {
-                //TALVEZ SEJA PRECISO USAR O ARG. ORDER PARA OBTER OS DIDAASSIGNMENT CERTOS
                 GrpcChannel nextWorkerChannel = GrpcChannel.ForAddress(
                     request.DidaRequest.Chain[request.DidaRequest.Next].Host + ":" + request.DidaRequest.Chain[request.DidaRequest.Next].Port);
                 WorkerService.WorkerServiceClient nextWorkerClient = new WorkerService.WorkerServiceClient(nextWorkerChannel);

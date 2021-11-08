@@ -7,7 +7,6 @@ service WorkerService {
 	rpc StartApp(StartAppRequest) returns (StartAppReply);
 	rpc Status(StatusRequest) returns (StatusReply);
 	rpc Crash(CrashRequest) returns (CrashReply);
-
 }
 
 message SendNodesURLRequest {
@@ -29,6 +28,11 @@ message StartAppReply {
 
 //Data Structures
 
+message DIDAVersion {
+	int32 versionNumber = 1;
+	int32 replicaId = 2;
+}
+
 message DIDARequest {
 	DIDAMetaRecord didaMetaRecord = 1;
 	string input = 2;
@@ -39,7 +43,7 @@ message DIDARequest {
 
 message DIDAMetaRecord {
 	int32 id = 1;
-	// other metadata to be specified by the students
+	map<string, DIDAVersion> RecordIdToConsistentVersion = 2;
 }
 
 message DIDAAssignment {

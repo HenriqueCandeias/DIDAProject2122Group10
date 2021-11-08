@@ -1,5 +1,4 @@
-﻿using DIDAOperator;
-using DIDAWorker;
+﻿using DIDAWorker;
 using Storage;
 using System;
 using System.Collections.Generic;
@@ -14,18 +13,28 @@ namespace Worker
 
         Dictionary<string, Grpc.Net.Client.GrpcChannel> channels = new Dictionary<string, Grpc.Net.Client.GrpcChannel>();
 
-        DIDAWorker.DIDAMetaRecord meta;
+        DIDAMetaRecordConsistent metaRecord;
 
         SortedDictionary<ulong, StorageService.StorageServiceClient> replicaIdToClient = new SortedDictionary<ulong, StorageService.StorageServiceClient>();
 
+        public static readonly DIDARecord nullDIDARecord = new DIDARecord
+        {
+            Id = "",
+            Version = new DIDAWorker.DIDAVersion
+            {
+                VersionNumber = -1,
+                ReplicaId = -1,
+            },
+            Val = "",
+        };
 
-        // The constructor of a storage proxy.
-        // The storageNodes parameter lists the nodes that this storage proxy needs to be aware of to perform
-        // read, write and updateIfValueIs operations.
-        // The metaRecord identifies the request being processed by this storage proxy object
-        // and allows the storage proxy to request data versions previously accessed by the request
-        // and to inform operators running on the following (downstream) workers of the versions it Baccessed.
-        public StorageProxy(DIDAStorageNode[] storageNodes, DIDAWorker.DIDAMetaRecord metaRecord)
+        private static readonly DIDAVersion nullDIDAVersion = new DIDAVersion
+        {
+            VersionNumber = -1,
+            ReplicaId = -1,
+        };
+
+        public StorageProxy(DIDAStorageNode[] storageNodes, DIDAMetaRecordConsistent metaRecord)
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
@@ -37,20 +46,16 @@ namespace Worker
                 byte[] encodedReplicaId = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(n.serverId));
                 var hashedReplicaId = BitConverter.ToUInt64(encodedReplicaId, 0);
 
-                Console.WriteLine("Replica with ID " + n.serverId + " has hash " + hashedReplicaId.ToString());
-
                 replicaIdToClient.Add(hashedReplicaId, clients[n.serverId]);
             }
 
-            meta = metaRecord;
+            this.metaRecord = metaRecord;
         }
 
         private SortedDictionary<ulong, StorageService.StorageServiceClient> LocateStorageNodesWithRecord(string id)
         {
             byte[] encodedRecordId = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(id));
             var hashedRecordId = BitConverter.ToUInt64(encodedRecordId, 0);
-
-            Console.WriteLine("Record with ID " + id + " has hash " + hashedRecordId.ToString());
 
             SortedDictionary<ulong, StorageService.StorageServiceClient> nodes = new SortedDictionary<ulong, StorageService.StorageServiceClient>();
 
@@ -79,21 +84,26 @@ namespace Worker
             return nodes;
         }
 
-        // THE FOLLOWING 3 METHODS ARE THE ESSENCE OF A STORAGE PROXY
-        // IN THIS EXAMPLE THEY ARE JUST CALLING THE STORAGE 
-        // IN THE COMLPETE IMPLEMENTATION THEY NEED TO:
-        // 1) LOCATE THE RIGHT STORAGE SERVER,
-        // 2) DEAL WITH FAILED STORAGE SERVERS
-        // 3) CHECK IN THE METARECORD WHICH ARE THE PREVIOUSLY READ VERSIONS OF DATA 
-        // 4) RECORD ACCESSED DATA INTO THE METARECORD
-
-        // this dummy solution assumes there is a single storage server called "s1"
         public virtual DIDAWorker.DIDARecordReply read(DIDAWorker.DIDAReadRequest r)
         {
             SortedDictionary<ulong, StorageService.StorageServiceClient> storagesWithRecord = LocateStorageNodesWithRecord(r.Id);
 
-            //Modify r (or not) according to the metadata in this.meta
+            
+            if (r.Version.Equals(nullDIDAVersion))
+            {
+                //Check if any of the operators of the app has already modified the record.
+                //If so, the current operator will only be able to read the record version obtained by those operators.
 
+                foreach (string recordId in metaRecord.RecordIdToConsistentVersion.Keys)
+                {
+                    if (recordId.Equals(r.Id))
+                    {
+                        r.Version = metaRecord.RecordIdToConsistentVersion.GetValueOrDefault(recordId);
+                        break;
+                    }
+                }
+            }
+                
             //Tolerate faults when calling gRPC methods on the storage nodes; delete crashed nodes from this.clients
 
             ReadStorageReply reply = null;
@@ -104,23 +114,46 @@ namespace Worker
                 //garbage-collected (maxVersions) or replica crashed. In that case, the app should terminate (no more workers in the chain will execute the remaining operators of the app).
 
                 //ASSUMING ONLY ONE REPLICA
-                reply = pair.Value.ReadStorage(new ReadStorageRequest { Id = r.Id, DidaVersion = new DidaVersion { VersionNumber = r.Version.VersionNumber, ReplicaId = r.Version.ReplicaId } });
+                reply = pair.Value.ReadStorage(new ReadStorageRequest
+                {
+                    Id = r.Id,
+                    DidaVersion = new DidaVersion
+                    {
+                        VersionNumber = r.Version.VersionNumber,
+                        ReplicaId = r.Version.ReplicaId
+                    }
+                });
             }
+
+            //If a future operator of this app reads a record with the same record id,
+            //it has to read the same version read by this operator.
+
+            metaRecord.RecordIdToConsistentVersion[reply.DidaRecord.Id] = new DIDAWorker.DIDAVersion 
+            {
+                VersionNumber = reply.DidaRecord.DidaVersion.VersionNumber,
+                ReplicaId = reply.DidaRecord.DidaVersion.ReplicaId,
+            };
 
             Console.WriteLine(
                 "Read - the record is: ID: " + reply.DidaRecord.Id + " Version Number: " + reply.DidaRecord.DidaVersion.VersionNumber +
                 " Replica ID: " + reply.DidaRecord.DidaVersion.ReplicaId + " Val: " + reply.DidaRecord.Val
             );
 
-            return new DIDAWorker.DIDARecordReply { Id = "1", Val = "1", Version = { VersionNumber = 1, ReplicaId = 1 } };
+            return new DIDAWorker.DIDARecordReply
+            {
+                Id = reply.DidaRecord.Id,
+                Val = reply.DidaRecord.Val,
+                Version =
+                {
+                    VersionNumber = reply.DidaRecord.DidaVersion.VersionNumber,
+                    ReplicaId = reply.DidaRecord.DidaVersion.ReplicaId,
+                },
+            };
         }
 
-        // this dummy solution assumes there is a single storage server called "s1"
         public virtual DIDAWorker.DIDAVersion write(DIDAWorker.DIDAWriteRequest r)
         {
             SortedDictionary<ulong, StorageService.StorageServiceClient> storagesWithRecord = LocateStorageNodesWithRecord(r.Id);
-
-            //Modify r (or not) according to the metadata in this.meta
 
             //Tolerate faults when calling gRPC methods on the storage nodes; delete crashed nodes from this.clients
 
@@ -132,23 +165,37 @@ namespace Worker
                 //garbage-collected (maxVersions) or replica crashed. In that case, the app should terminate (no more workers in the chain will execute the remaining operators of the app).
 
                 //ASSUMING ONLY ONE REPLICA
-                reply = pair.Value.WriteStorage(new WriteStorageRequest { Id = r.Id, Val = r.Val });
+                reply = pair.Value.WriteStorage(new WriteStorageRequest
+                {
+                    Id = r.Id,
+                    Val = r.Val
+                });
             }
+
+            //If a future operator of this app reads a record with the same record id,
+            //it has to read the version corresponding to the "write" that was just performed.
+
+            metaRecord.RecordIdToConsistentVersion[r.Id] = new DIDAWorker.DIDAVersion
+            {
+                VersionNumber = reply.DidaVersion.VersionNumber,
+                ReplicaId = reply.DidaVersion.ReplicaId,
+            };
 
             Console.WriteLine(
                 "Write - new version is: Version Number: " + reply.DidaVersion.VersionNumber +
                 " Replica ID: " + reply.DidaVersion.ReplicaId
             );
 
-            return new DIDAWorker.DIDAVersion { VersionNumber = reply.DidaVersion.VersionNumber, ReplicaId = reply.DidaVersion.ReplicaId };
+            return new DIDAWorker.DIDAVersion
+            {
+                VersionNumber = reply.DidaVersion.VersionNumber,
+                ReplicaId = reply.DidaVersion.ReplicaId
+            };
         }
 
-        // this dummy solution assumes there is a single storage server called "s1"
         public virtual DIDAWorker.DIDAVersion updateIfValueIs(DIDAWorker.DIDAUpdateIfRequest r)
         {
             SortedDictionary<ulong, StorageService.StorageServiceClient> storagesWithRecord = LocateStorageNodesWithRecord(r.Id);
-
-            //Modify r (or not) according to the metadata in this.meta
 
             //Tolerate faults when calling gRPC methods on the storage nodes; delete crashed nodes from this.clients
 
@@ -160,15 +207,33 @@ namespace Worker
                 //garbage-collected (maxVersions) or replica crashed. In that case, the app should terminate (no more workers in the chain will execute the remaining operators of the app).
 
                 //ASSUMING ONLY ONE REPLICA
-                reply = pair.Value.UpdateIf(new UpdateIfRequest { Id = r.Id, NewValue = r.Newvalue, OldValue = r.Oldvalue });
+                reply = pair.Value.UpdateIf(new UpdateIfRequest
+                {
+                    Id = r.Id,
+                    NewValue = r.Newvalue,
+                    OldValue = r.Oldvalue
+                });
             }
+
+            //If a future operator of this app reads a record with the same record id,
+            //it has to read the version corresponding to the "write" that was just performed.
+
+            metaRecord.RecordIdToConsistentVersion[r.Id] = new DIDAWorker.DIDAVersion
+            {
+                VersionNumber = reply.DidaVersion.VersionNumber,
+                ReplicaId = reply.DidaVersion.ReplicaId,
+            };
 
             Console.WriteLine(
                 "UpdateIf - new version is: Version Number: " + reply.DidaVersion.VersionNumber +
                 " Replica ID: " + reply.DidaVersion.ReplicaId
             );
 
-            return new DIDAWorker.DIDAVersion { VersionNumber = reply.DidaVersion.VersionNumber, ReplicaId = reply.DidaVersion.ReplicaId };
+            return new DIDAWorker.DIDAVersion
+            {
+                VersionNumber = reply.DidaVersion.VersionNumber,
+                ReplicaId = reply.DidaVersion.ReplicaId
+            };
         }
     }
 }

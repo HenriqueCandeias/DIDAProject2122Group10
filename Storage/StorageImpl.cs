@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Storage
 {
-    public class StorageImpl : DIDAStorage.IDIDAStorage
+    public class StorageImpl : IDIDAStorage
     {
         private int gossipDelay;
 
