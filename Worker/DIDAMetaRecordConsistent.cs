@@ -7,5 +7,7 @@ namespace DIDAWorker
     public class DIDAMetaRecordConsistent : DIDAMetaRecord
     {
         public Dictionary<string, DIDAVersion> RecordIdToConsistentVersion = new Dictionary<string, DIDAVersion>();
+
+        public bool appIsInconsistent = false;
     }
 }

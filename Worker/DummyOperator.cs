@@ -41,7 +41,7 @@ namespace DIDAOperator
                 Val = myOutput,
             });
 
-
+            /*
             DIDARecordReply reply = storageProxy.read(new DIDAReadRequest
             {
                 Id = "myRecord",
@@ -54,7 +54,7 @@ namespace DIDAOperator
 
             if (!reply.Val.Equals(myOutput))
                 Console.WriteLine("\r\nTEST FAILED\r\n");
-            /*
+            
             storageProxy.read(new DIDAReadRequest
             {
                 Id = "myRecord",
@@ -64,7 +64,7 @@ namespace DIDAOperator
                     ReplicaId = 0,
                 }
             });
-            */
+            
             DIDAVersion newVersion = storageProxy.updateIfValueIs(new DIDAUpdateIfRequest
             {
                 Id = "myRecord",
@@ -77,6 +77,7 @@ namespace DIDAOperator
                 Console.WriteLine("UpdateIf SUCCESS");
                 myOutput = "10";
             }
+            */
                 
             Console.WriteLine("DummyOperator: Wrote my output successfully.");
 

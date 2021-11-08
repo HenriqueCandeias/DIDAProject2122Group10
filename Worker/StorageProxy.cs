@@ -1,4 +1,5 @@
 ﻿using DIDAWorker;
+using Grpc.Net.Client;
 using Storage;
 using System;
 using System.Collections.Generic;
@@ -9,15 +10,11 @@ namespace Worker
 {
     public class StorageProxy : IDIDAStorage
     {
-        Dictionary<string, StorageService.StorageServiceClient> clients = new Dictionary<string, StorageService.StorageServiceClient>();
-
-        Dictionary<string, Grpc.Net.Client.GrpcChannel> channels = new Dictionary<string, Grpc.Net.Client.GrpcChannel>();
-
         DIDAMetaRecordConsistent metaRecord;
 
         SortedDictionary<ulong, StorageService.StorageServiceClient> replicaIdToClient = new SortedDictionary<ulong, StorageService.StorageServiceClient>();
 
-        public static readonly DIDARecord nullDIDARecord = new DIDARecord
+        public static readonly DIDARecordReply nullDIDARecordReply = new DIDARecordReply
         {
             Id = "",
             Version = new DIDAWorker.DIDAVersion
@@ -40,13 +37,11 @@ namespace Worker
 
             foreach (DIDAStorageNode n in storageNodes)
             {
-                channels[n.serverId] = Grpc.Net.Client.GrpcChannel.ForAddress(n.host + ":" + n.port);
-                clients[n.serverId] = new StorageService.StorageServiceClient(channels[n.serverId]);
-
                 byte[] encodedReplicaId = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(n.serverId));
                 var hashedReplicaId = BitConverter.ToUInt64(encodedReplicaId, 0);
 
-                replicaIdToClient.Add(hashedReplicaId, clients[n.serverId]);
+                GrpcChannel channel = GrpcChannel.ForAddress(n.host + ":" + n.port);
+                replicaIdToClient.Add(hashedReplicaId, new StorageService.StorageServiceClient(channel));
             }
 
             this.metaRecord = metaRecord;
@@ -88,7 +83,8 @@ namespace Worker
         {
             SortedDictionary<ulong, StorageService.StorageServiceClient> storagesWithRecord = LocateStorageNodesWithRecord(r.Id);
 
-            
+            bool versionChangedAccordingToMetaRecord = false;
+
             if (r.Version.Equals(nullDIDAVersion))
             {
                 //Check if any of the operators of the app has already modified the record.
@@ -99,12 +95,11 @@ namespace Worker
                     if (recordId.Equals(r.Id))
                     {
                         r.Version = metaRecord.RecordIdToConsistentVersion.GetValueOrDefault(recordId);
+                        versionChangedAccordingToMetaRecord = true;
                         break;
                     }
                 }
             }
-                
-            //Tolerate faults when calling gRPC methods on the storage nodes; delete crashed nodes from this.clients
 
             ReadStorageReply reply = null;
 
@@ -113,16 +108,37 @@ namespace Worker
                 //First check if the desired replica has the desired version. If not, try again with the next replicas. If no replica has the desired version, then it has already been
                 //garbage-collected (maxVersions) or replica crashed. In that case, the app should terminate (no more workers in the chain will execute the remaining operators of the app).
 
-                //ASSUMING ONLY ONE REPLICA
-                reply = pair.Value.ReadStorage(new ReadStorageRequest
+                try
                 {
-                    Id = r.Id,
-                    DidaVersion = new DidaVersion
+                    reply = pair.Value.ReadStorage(new ReadStorageRequest
                     {
-                        VersionNumber = r.Version.VersionNumber,
-                        ReplicaId = r.Version.ReplicaId
-                    }
-                });
+                        Id = r.Id,
+                        DidaVersion = new DidaVersion
+                        {
+                            VersionNumber = r.Version.VersionNumber,
+                            ReplicaId = r.Version.ReplicaId
+                        }
+                    });
+                }
+                catch (Grpc.Core.RpcException)
+                {
+                    Console.WriteLine("Replica with id " + pair.Key.ToString() + " crashed while performing read operation.");
+                    replicaIdToClient.Remove(pair.Key);
+                    continue;
+                }
+                
+                if (reply.DidaRecord.DidaVersion.VersionNumber != -1 && reply.DidaRecord.DidaVersion.ReplicaId != -1)
+                    break;
+            }
+
+            //Note: if a read operation is executed according to a record id that does not exist anywhere AND
+            //versionChangedAccordingToMetaRecord, then the app will be considered inconsistent and terminate.
+
+            if (reply.DidaRecord.DidaVersion.VersionNumber == -1 && reply.DidaRecord.DidaVersion.ReplicaId == -1 
+                && versionChangedAccordingToMetaRecord)
+            {
+                metaRecord.appIsInconsistent = true;
+                return nullDIDARecordReply;
             }
 
             //If a future operator of this app reads a record with the same record id,
@@ -155,8 +171,6 @@ namespace Worker
         {
             SortedDictionary<ulong, StorageService.StorageServiceClient> storagesWithRecord = LocateStorageNodesWithRecord(r.Id);
 
-            //Tolerate faults when calling gRPC methods on the storage nodes; delete crashed nodes from this.clients
-
             WriteStorageReply reply = null;
 
             foreach (KeyValuePair<ulong, StorageService.StorageServiceClient> pair in storagesWithRecord)
@@ -164,12 +178,22 @@ namespace Worker
                 //First check if the desired replica has the desired version. If not, try again with the next replicas. If no replica has the desired version, then it has already been
                 //garbage-collected (maxVersions) or replica crashed. In that case, the app should terminate (no more workers in the chain will execute the remaining operators of the app).
 
-                //ASSUMING ONLY ONE REPLICA
-                reply = pair.Value.WriteStorage(new WriteStorageRequest
+                try
                 {
-                    Id = r.Id,
-                    Val = r.Val
-                });
+                    reply = pair.Value.WriteStorage(new WriteStorageRequest
+                    {
+                        Id = r.Id,
+                        Val = r.Val
+                    });
+                }
+                catch (Grpc.Core.RpcException)
+                {
+                    Console.WriteLine("Replica with id " + pair.Key.ToString() + " crashed while performing write operation.");
+                    replicaIdToClient.Remove(pair.Key);
+                    continue;
+                }
+
+                break;
             }
 
             //If a future operator of this app reads a record with the same record id,
@@ -197,8 +221,6 @@ namespace Worker
         {
             SortedDictionary<ulong, StorageService.StorageServiceClient> storagesWithRecord = LocateStorageNodesWithRecord(r.Id);
 
-            //Tolerate faults when calling gRPC methods on the storage nodes; delete crashed nodes from this.clients
-
             UpdateIfReply reply = null;
 
             foreach (KeyValuePair<ulong, StorageService.StorageServiceClient> pair in storagesWithRecord)
@@ -206,13 +228,23 @@ namespace Worker
                 //First check if the desired replica has the desired version. If not, try again with the next replicas. If no replica has the desired version, then it has already been
                 //garbage-collected (maxVersions) or replica crashed. In that case, the app should terminate (no more workers in the chain will execute the remaining operators of the app).
 
-                //ASSUMING ONLY ONE REPLICA
-                reply = pair.Value.UpdateIf(new UpdateIfRequest
+                try
                 {
-                    Id = r.Id,
-                    NewValue = r.Newvalue,
-                    OldValue = r.Oldvalue
-                });
+                    reply = pair.Value.UpdateIf(new UpdateIfRequest
+                    {
+                        Id = r.Id,
+                        NewValue = r.Newvalue,
+                        OldValue = r.Oldvalue
+                    });
+                }
+                catch (Grpc.Core.RpcException)
+                {
+                    Console.WriteLine("Replica with id " + pair.Key.ToString() + " crashed while performing updateIfValueIs operation.");
+                    replicaIdToClient.Remove(pair.Key);
+                    continue;
+                }
+
+                break;
             }
 
             //If a future operator of this app reads a record with the same record id,

@@ -93,6 +93,9 @@ namespace Worker
 
             string output = myOperator.ProcessRecord(metaRecordConsistent, request.DidaRequest.Input, previousOutput);
 
+            if (metaRecordConsistent.appIsInconsistent)
+                return new StartAppReply();
+
             StartAppRequest nextWorkerRequest = new StartAppRequest()
             {
                 DidaRequest = new DIDARequest()
