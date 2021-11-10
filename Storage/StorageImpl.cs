@@ -108,6 +108,11 @@ namespace Storage
                         Id = id,
                         OldVal = oldValue,
                         NewVal = newValue,
+                        DidaVersion = new DidaVersion
+                        {
+                            VersionNumber = newVersion.versionNumber,
+                            ReplicaId = newVersion.replicaId,
+                        },
                     });
 
                     return newVersion;
@@ -133,7 +138,6 @@ namespace Storage
             DIDARecord newRecord = new DIDARecord
             {
                 id = id,
-                version = newVersion,
                 val = val,
             };
 
@@ -160,6 +164,11 @@ namespace Storage
             {
                 Id = id,
                 NewVal = val,
+                DidaVersion = new DidaVersion
+                {
+                    VersionNumber = newVersion.versionNumber,
+                    ReplicaId = newVersion.replicaId,
+                },
             });
 
             return newVersion;
@@ -188,7 +197,9 @@ namespace Storage
 
         public List<LogStruct> GetLog()
         {
-            return log;
+            List<LogStruct> lastLog = log;
+            log = new List<LogStruct>();
+            return lastLog;
         }
     }
 }

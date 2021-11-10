@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Timers;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Storage
 {
@@ -44,6 +45,8 @@ namespace Storage
         {
             GossipReply reply = null;
 
+            List<LogStruct> allLogs = new List<LogStruct>();
+
             foreach (KeyValuePair<string, StorageService.StorageServiceClient> pair in clients)
             {
                 try
@@ -52,26 +55,36 @@ namespace Storage
                     {
                         LogRequest = "resquest log from :" + replicaId,
                     });
+
+                    allLogs.AddRange(reply.LogReply);
                     Console.WriteLine(reply);
-
-
-                    foreach (var items in reply.LogReply)
-                    {
-                        if (string.IsNullOrEmpty(items.OldVal))
-                        {
-                            storageImpl.write(items.Id, items.NewVal);
-                        }
-                        else
-                        {
-                            storageImpl.updateIfValueIs(items.Id, items.OldVal, items.NewVal);
-                        }
-                    }
-
                 }
                 catch
                 {
                     Console.WriteLine("grpc connection to " + pair.Key + "has expired");
-                    //remove from client and storagesIdToURL
+
+                    storagesIdToURL.Remove(pair.Key);
+                    channels.Remove(pair.Key);
+                    clients.Remove(pair.Key);
+
+                    //send failed storage info above
+                }
+            }
+
+            List<LogStruct> SortedList = allLogs.OrderBy(l => l.Id).ThenBy(l => l.DidaVersion.VersionNumber).ToList();
+
+            allLogs.ForEach(p => Console.WriteLine(p));
+            SortedList.ForEach(p => Console.WriteLine(p));
+
+            foreach (var items in SortedList)
+            {
+                if (string.IsNullOrEmpty(items.OldVal))
+                {
+                    storageImpl.write(items.Id, items.NewVal);
+                }
+                else
+                {
+                    storageImpl.updateIfValueIs(items.Id, items.OldVal, items.NewVal);
                 }
             }
         }

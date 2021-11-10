@@ -111,4 +111,5 @@ message LogStruct{
 	string id = 1;
 	optional string oldVal = 2;
 	string newVal = 3;
+	DidaVersion didaVersion = 4;
 }
