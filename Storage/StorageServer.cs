@@ -118,5 +118,18 @@ namespace Storage
             }
         }
 
+        public override Task<GossipReply> RequestLog(GossipRequest request, ServerCallContext context)
+        {
+            try
+            {
+                return Task.FromResult<GossipReply>(domain.RequestLog(request));
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                throw e;
+            }
+        }
+
     }
 }

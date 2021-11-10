@@ -11,6 +11,7 @@ service StorageService {
 	rpc List(ListRequest) returns (ListReply);
 	rpc Crash(CrashRequest) returns (CrashReply);
 	rpc Populate(PopulateRequest) returns (PopulateReply);
+	rpc RequestLog (GossipRequest) returns (GossipReply);
 }
 
 //// structures ////
@@ -96,4 +97,18 @@ message PopulateRequest {
 
 message PopulateReply {
 
+}
+
+message GossipRequest { 
+	string LogRequest = 1;
+}
+
+message GossipReply {
+	repeated LogStruct LogReply = 1;
+}
+
+message LogStruct{
+	string id = 1;
+	optional string oldVal = 2;
+	string newVal = 3;
 }

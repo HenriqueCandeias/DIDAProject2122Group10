@@ -10,6 +10,7 @@ namespace Storage
 {
     class StorageMain
     {
+
         static void Main(string[] args)
         {
             try {

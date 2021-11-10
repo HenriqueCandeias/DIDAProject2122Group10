@@ -15,6 +15,8 @@ namespace Storage
 
         public Dictionary<string, List<DIDARecord>> recordIdToRecords = new Dictionary<string, List<DIDARecord>>();
 
+        private List<LogStruct> log = new List<LogStruct>();
+
         public static readonly DIDARecord nullDIDARecord = new DIDARecord
         {
             id = "",
@@ -105,6 +107,13 @@ namespace Storage
                         );
                         recordIdToRecords.GetValueOrDefault(id).RemoveAt(0);
                     }
+
+                    log.Add(new LogStruct { 
+                        Id = id,
+                        OldVal = oldValue,
+                        NewVal = newValue,
+                    });
+
                     return newVersion;
                 }
             }
@@ -151,6 +160,12 @@ namespace Storage
                 recordIdToRecords.GetValueOrDefault(id).RemoveAt(0);
             }
 
+            log.Add(new LogStruct
+            {
+                Id = id,
+                NewVal = val,
+            });
+
             return newVersion;
         }
 
@@ -173,6 +188,11 @@ namespace Storage
             }
 
             return mostRecentRecord;
+        }
+
+        public List<LogStruct> GetLog()
+        {
+            return log;
         }
     }
 }

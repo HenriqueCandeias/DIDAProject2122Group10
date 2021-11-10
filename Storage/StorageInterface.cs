@@ -2,19 +2,24 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Timers;
 using System.Threading.Tasks;
 
 namespace Storage
 {
     class StorageInterface
     {
-        private int gossipDelay;
+        private int replicaId;
 
         public StorageImpl storageImpl;
 
         private Dictionary<string, string> workersIdToURL = new Dictionary<string, string>();
 
         private Dictionary<string, string> storagesIdToURL = new Dictionary<string, string>();
+
+        private Dictionary<string, Grpc.Net.Client.GrpcChannel> channels = new Dictionary<string, Grpc.Net.Client.GrpcChannel>();
+        private Dictionary<string, StorageService.StorageServiceClient> clients = new Dictionary<string, StorageService.StorageServiceClient>();
+
 
         private static readonly ReadStorageReply nullReadStorageReply = new ReadStorageReply
         {
@@ -31,6 +36,52 @@ namespace Storage
         public StorageInterface(int gossip_delay, int replica_id)
         {
             storageImpl = new StorageImpl(gossip_delay, replica_id);
+            replicaId = replica_id;
+            SetTimer(gossip_delay, Gossip);
+        }
+
+        private void Gossip(Object source, ElapsedEventArgs e)
+        {
+            GossipReply reply = null;
+
+            foreach (KeyValuePair<string, StorageService.StorageServiceClient> pair in clients)
+            {
+                reply = pair.Value.RequestLog(new GossipRequest
+                {
+                    LogRequest = "resquest log from :" + replicaId,
+                });
+                Console.WriteLine(reply);
+
+                foreach( var items in reply.LogReply)
+                {
+                    if (string.IsNullOrEmpty(items.OldVal))
+                    {
+                        storageImpl.updateIfValueIs(items.Id, items.OldVal, items.NewVal);
+                    }
+                    else
+                    {
+                        storageImpl.write(items.Id, items.NewVal);
+                    }
+                }
+            }
+        }
+
+        private static void SetTimer(int gossip_delay, ElapsedEventHandler Gossip)
+        {
+            Timer timer = new Timer(gossip_delay);
+            timer.Elapsed += new ElapsedEventHandler(Gossip);
+            timer.AutoReset = true;
+            timer.Enabled = true;
+        }
+
+        public GossipReply RequestLog(GossipRequest request)
+        {
+            Console.WriteLine(request.LogRequest);
+
+            var gossipreply = new GossipReply();
+            gossipreply.LogReply.Add(storageImpl.GetLog());
+
+            return gossipreply;
         }
 
         public SendNodesURLReply SendNodesURL(SendNodesURLRequest request)
@@ -41,10 +92,16 @@ namespace Storage
                 Console.WriteLine("Worker: " + key + " URL: " + workersIdToURL.GetValueOrDefault(key));
             }
 
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
             foreach (string key in request.Storages.Keys)
             {
                 storagesIdToURL.Add(key, request.Storages.GetValueOrDefault(key));
                 Console.WriteLine("Storage: " + key + " URL: " + storagesIdToURL.GetValueOrDefault(key));
+
+                channels[key] = Grpc.Net.Client.GrpcChannel.ForAddress(storagesIdToURL.GetValueOrDefault(key));
+                clients[key] = new StorageService.StorageServiceClient(channels[key]);
+
             }
 
             return new SendNodesURLReply();
