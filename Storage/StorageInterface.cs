@@ -46,22 +46,31 @@ namespace Storage
 
             foreach (KeyValuePair<string, StorageService.StorageServiceClient> pair in clients)
             {
-                reply = pair.Value.RequestLog(new GossipRequest
+                try
                 {
-                    LogRequest = "resquest log from :" + replicaId,
-                });
-                Console.WriteLine(reply);
+                    reply = pair.Value.RequestLog(new GossipRequest
+                    {
+                        LogRequest = "resquest log from :" + replicaId,
+                    });
+                    Console.WriteLine(reply);
 
-                foreach( var items in reply.LogReply)
+
+                    foreach (var items in reply.LogReply)
+                    {
+                        if (string.IsNullOrEmpty(items.OldVal))
+                        {
+                            storageImpl.updateIfValueIs(items.Id, items.OldVal, items.NewVal);
+                        }
+                        else
+                        {
+                            storageImpl.write(items.Id, items.NewVal);
+                        }
+                    }
+
+                }
+                catch
                 {
-                    if (string.IsNullOrEmpty(items.OldVal))
-                    {
-                        storageImpl.updateIfValueIs(items.Id, items.OldVal, items.NewVal);
-                    }
-                    else
-                    {
-                        storageImpl.write(items.Id, items.NewVal);
-                    }
+                    Console.WriteLine("grpc connection to " + pair.Key + "has expired");
                 }
             }
         }
