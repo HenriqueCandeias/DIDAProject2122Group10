@@ -35,7 +35,7 @@ namespace Storage
 
         public StorageInterface(int gossip_delay, int replica_id)
         {
-            storageImpl = new StorageImpl(gossip_delay, replica_id);
+            storageImpl = new StorageImpl(replica_id);
             replicaId = replica_id;
             SetTimer(gossip_delay, Gossip);
         }
@@ -59,11 +59,11 @@ namespace Storage
                     {
                         if (string.IsNullOrEmpty(items.OldVal))
                         {
-                            storageImpl.updateIfValueIs(items.Id, items.OldVal, items.NewVal);
+                            storageImpl.write(items.Id, items.NewVal);
                         }
                         else
                         {
-                            storageImpl.write(items.Id, items.NewVal);
+                            storageImpl.updateIfValueIs(items.Id, items.OldVal, items.NewVal);
                         }
                     }
 
@@ -71,6 +71,7 @@ namespace Storage
                 catch
                 {
                     Console.WriteLine("grpc connection to " + pair.Key + "has expired");
+                    //remove from client and storagesIdToURL
                 }
             }
         }

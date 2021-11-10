@@ -7,8 +7,6 @@ namespace Storage
 {
     public class StorageImpl : IDIDAStorage
     {
-        private int gossipDelay;
-
         private int replicaId;
 
         private const int maxVersions = 3;
@@ -34,10 +32,8 @@ namespace Storage
             replicaId = -1,
         };
 
-        public StorageImpl(int gossip_delay, int replica_id)
+        public StorageImpl(int replica_id)
         {
-            
-            gossipDelay = gossip_delay;
             replicaId = replica_id;
         }
 
