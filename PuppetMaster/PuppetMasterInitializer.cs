@@ -45,8 +45,6 @@ namespace PuppetMaster
 
         private bool nodesAreInformed = false;
 
-        private int highestReplicaId = -1;
-
         public enum Action
         {
             List,
@@ -73,34 +71,12 @@ namespace PuppetMaster
 
         private void InformNodesAboutURL()
         {
-            //Inform Scheduler about URLs
-
-            Scheduler.SendNodesURLRequest schedulerRequest = new Scheduler.SendNodesURLRequest();
+            SendNodesURLRequest schedulerRequest = new SendNodesURLRequest();
 
             schedulerRequest.Workers.Add(workersIdToURL);
             schedulerRequest.Storages.Add(storagesIdToURL);
 
             schedulerClient.SendNodesURL(schedulerRequest);
-
-            //Inform Workers about URLs
-    
-            Worker.SendNodesURLRequest workersRequest = new Worker.SendNodesURLRequest();
-
-            workersRequest.Workers.Add(workersIdToURL);
-            workersRequest.Storages.Add(storagesIdToURL);
-
-            foreach (WorkerService.WorkerServiceClient worker in workersIdToClient.Values)
-                worker.SendNodesURL(workersRequest);
-
-            //Inform Storages about URLs
-
-            Storage.SendNodesURLRequest storagesRequest = new Storage.SendNodesURLRequest();
-
-            storagesRequest.Workers.Add(workersIdToURL);
-            storagesRequest.Storages.Add(storagesIdToURL);
-
-            foreach (StorageService.StorageServiceClient storage in storagesIdToClient.Values)
-                storage.SendNodesURL(storagesRequest);
         }
 
         public void Execute(string command)
@@ -199,7 +175,7 @@ namespace PuppetMaster
             schedulerClient = new SchedulerService.SchedulerServiceClient(schedulerChannel);
         }
 
-        public void StartWorker(string server_id, string URL, string gossip_delay)
+        public void StartWorker(string server_id, string URL, string worker_delay)
         {
             workersIdToURL.Add(server_id, URL);
 
@@ -207,7 +183,7 @@ namespace PuppetMaster
             {
                 ServerId = server_id,
                 Url = URL,
-                GossipDelay = Int32.Parse(gossip_delay),
+                WorkerDelay = Int32.Parse(worker_delay),
                 DebugActive = debugActive,
                 PuppetMasterURL = puppetMasterHost + ":" + puppetMasterPort,
             };
@@ -225,14 +201,10 @@ namespace PuppetMaster
         {
             storagesIdToURL.Add(server_id, URL);
 
-            highestReplicaId++;
-
             StartStorageRequest request = new StartStorageRequest()
             {
-                ServerId = server_id,
                 Url = URL,
                 GossipDelay = Int32.Parse(gossip_delay),
-                ReplicaId = highestReplicaId,
             };
 
             GrpcChannel pcsChannel = GrpcChannel.ForAddress(URL.Split(':')[0] + ":" + URL.Split(':')[1] + ":" + pcsServerPort.ToString());

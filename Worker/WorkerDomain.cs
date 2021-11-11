@@ -10,38 +10,35 @@ using System.Reflection;
 using Grpc.Net.Client;
 using Worker;
 using DIDAOperator;
+using System.Threading;
 
 namespace Worker
 {
     class WorkerDomain
     {
-        private int gossipDelay;
+        private int workerDelay;
+
+        private float replicationFactor = 0;
 
         private string puppetMasterURL;
 
-        private Dictionary<string, string> workersIdToURL = new Dictionary<string, string>();
+        private Dictionary<int, string> storagesIdToURL = new Dictionary<int, string>();
 
-        private Dictionary<string, string> storagesIdToURL = new Dictionary<string, string>();
-
-        public WorkerDomain(int gossip_delay, string puppet_master_URL)
+        public WorkerDomain(int worker_delay, string puppet_master_URL)
         {
-            gossipDelay = gossip_delay;
+            workerDelay = worker_delay;
             puppetMasterURL = puppet_master_URL;
         }
 
         public SendNodesURLReply SendNodesURL(SendNodesURLRequest request)
         {
-            foreach (string key in request.Workers.Keys)
-            {
-                workersIdToURL.Add(key, request.Workers.GetValueOrDefault(key));
-                Console.WriteLine("Worker: " + key + " URL: " + workersIdToURL.GetValueOrDefault(key));
-            }
-
-            foreach (string key in request.Storages.Keys)
+            foreach (int key in request.Storages.Keys)
             {
                 storagesIdToURL.Add(key, request.Storages.GetValueOrDefault(key));
                 Console.WriteLine("Storage: " + key + " URL: " + storagesIdToURL.GetValueOrDefault(key));
             }
+
+            replicationFactor = request.ReplicationFactor;
 
             return new SendNodesURLReply();
         }
@@ -50,6 +47,8 @@ namespace Worker
         {
             Console.WriteLine("Received a DIDARequest:");
             Console.WriteLine(request.DidaRequest.ToString());
+
+            //Load the operator mentioned in the request by reflection
 
             DIDAAssignment didaAssignment = request.DidaRequest.Chain[request.DidaRequest.Next];
 
@@ -63,8 +62,12 @@ namespace Worker
                 return new StartAppReply();
             }
 
+            //Create the DIDAMetaRecord to assign to the StorageProxy 
+
             DIDAMetaRecordConsistent metaRecordConsistent = new DIDAMetaRecordConsistent();
             metaRecordConsistent.Id = request.DidaRequest.DidaMetaRecord.Id;
+            metaRecordConsistent.replicationFactor = replicationFactor;
+
             foreach (string recordId in request.DidaRequest.DidaMetaRecord.RecordIdToConsistentVersion.Keys)
             {
                 metaRecordConsistent.RecordIdToConsistentVersion.Add(recordId, new DIDAWorker.DIDAVersion
@@ -73,17 +76,21 @@ namespace Worker
                     ReplicaId = request.DidaRequest.DidaMetaRecord.RecordIdToConsistentVersion[recordId].ReplicaId,
                 });
             }
+
+            //Create the list of StorageNodes to assign to the StorageProxy
                 
             List<DIDAStorageNode> storagesURL = new List<DIDAStorageNode>();
-            foreach (KeyValuePair<string, string> pair in storagesIdToURL)
+            foreach (KeyValuePair<int, string> pair in storagesIdToURL)
             {
                 storagesURL.Add(new DIDAStorageNode
                 {
-                    serverId = pair.Key,
+                    serverId = pair.Key.ToString(),
                     host = pair.Value.Split(':')[0] + ":" + pair.Value.Split(':')[1],
                     port = Int32.Parse(pair.Value.Split(':')[2]),
                 });
             }
+
+            //Configure and run the operator
 
             myOperator.ConfigureStorage(new StorageProxy(storagesURL.ToArray(), metaRecordConsistent));
 
@@ -95,6 +102,8 @@ namespace Worker
 
             if (metaRecordConsistent.appIsInconsistent)
                 return new StartAppReply();
+
+            //Modify the received DIDARequest and send it to the next worker in the chain
 
             StartAppRequest nextWorkerRequest = new StartAppRequest()
             {
@@ -130,6 +139,9 @@ namespace Worker
                 Console.WriteLine("Going to send to the worker "
                     + request.DidaRequest.Chain[request.DidaRequest.Next].Host + ":" + request.DidaRequest.Chain[request.DidaRequest.Next].Port + " the following request: ");
                 Console.WriteLine(request);
+
+                Thread.Sleep(workerDelay);
+
                 nextWorkerClient.StartApp(request);  //nextWorkerClient.StartAppAsync(request);
                 Console.WriteLine("Request sent.");
             }

@@ -3,18 +3,8 @@
 package worker;
 
 service WorkerService {
-	rpc SendNodesURL(SendNodesURLRequest) returns (SendNodesURLReply);
 	rpc Status(StatusRequest) returns (StatusReply);
 	rpc Crash(CrashRequest) returns (CrashReply);
-}
-
-message SendNodesURLRequest {
-	map<string, string> workers = 1;
-	map<string, string> storages = 2;
-}
-
-message SendNodesURLReply {
-
 }
 
 message StatusRequest {

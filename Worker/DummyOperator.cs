@@ -24,6 +24,12 @@ namespace DIDAOperator
             string myOutput = (num + 1).ToString();
 
             //Storage Tests
+            
+            storageProxy.write(new DIDAWriteRequest
+            {
+                Id = "myRecord",
+                Val = myOutput,
+            });
 
             storageProxy.read(new DIDAReadRequest
             {
@@ -33,12 +39,6 @@ namespace DIDAOperator
                     VersionNumber = -1,
                     ReplicaId = -1,
                 }
-            });
-
-            storageProxy.write(new DIDAWriteRequest
-            {
-                Id = "myRecord",
-                Val = myOutput,
             });
 
             /*
@@ -78,7 +78,7 @@ namespace DIDAOperator
                 myOutput = "10";
             }
             */
-                
+
             Console.WriteLine("DummyOperator: Wrote my output successfully.");
 
             return myOutput;

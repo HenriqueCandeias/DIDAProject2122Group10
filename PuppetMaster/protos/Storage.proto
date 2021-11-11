@@ -3,20 +3,10 @@
 package storage;
 
 service StorageService {
-	rpc SendNodesURL(SendNodesURLRequest) returns (SendNodesURLReply);
 	rpc Status(StatusRequest) returns (StatusReply);
 	rpc List(ListRequest) returns (ListReply);
 	rpc Crash(CrashRequest) returns (CrashReply);
 	rpc Populate(PopulateRequest) returns (PopulateReply);
-}
-
-message SendNodesURLRequest {
-	map<string, string> workers = 1;
-	map<string, string> storages = 2;
-}
-
-message SendNodesURLReply {
-
 }
 
 message StatusRequest {

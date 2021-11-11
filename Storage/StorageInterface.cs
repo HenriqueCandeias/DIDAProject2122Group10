@@ -12,14 +12,13 @@ namespace Storage
     {
         private int replicaId;
 
+        private float replicationFactor = 0;
+
         public StorageImpl storageImpl;
 
-        private Dictionary<string, string> workersIdToURL = new Dictionary<string, string>();
+        private Dictionary<int, string> storagesIdToURL = new Dictionary<int, string>();
 
-        private Dictionary<string, string> storagesIdToURL = new Dictionary<string, string>();
-
-        private Dictionary<string, Grpc.Net.Client.GrpcChannel> channels = new Dictionary<string, Grpc.Net.Client.GrpcChannel>();
-        private Dictionary<string, StorageService.StorageServiceClient> clients = new Dictionary<string, StorageService.StorageServiceClient>();
+        private Dictionary<int, StorageService.StorageServiceClient> storageClients = new Dictionary<int, StorageService.StorageServiceClient>();
 
 
         private static readonly ReadStorageReply nullReadStorageReply = new ReadStorageReply
@@ -34,10 +33,9 @@ namespace Storage
             },
         };
 
-        public StorageInterface(int gossip_delay, int replica_id)
+        public StorageInterface(int gossip_delay)
         {
-            storageImpl = new StorageImpl(replica_id);
-            replicaId = replica_id;
+            storageImpl = new StorageImpl();
             SetTimer(gossip_delay, Gossip);
         }
 
@@ -47,7 +45,7 @@ namespace Storage
 
             List<LogStruct> allLogs = new List<LogStruct>();
 
-            foreach (KeyValuePair<string, StorageService.StorageServiceClient> pair in clients)
+            foreach (KeyValuePair<int, StorageService.StorageServiceClient> pair in storageClients)
             {
                 try
                 {
@@ -64,8 +62,7 @@ namespace Storage
                     Console.WriteLine("grpc connection to " + pair.Key + "has expired");
 
                     storagesIdToURL.Remove(pair.Key);
-                    channels.Remove(pair.Key);
-                    clients.Remove(pair.Key);
+                    storageClients.Remove(pair.Key);
 
                     //send failed storage info above
                 }
@@ -91,6 +88,9 @@ namespace Storage
 
         private static void SetTimer(int gossip_delay, ElapsedEventHandler Gossip)
         {
+            if (gossip_delay == 0)
+                return;
+
             Timer timer = new Timer(gossip_delay);
             timer.Elapsed += new ElapsedEventHandler(Gossip);
             timer.AutoReset = true;
@@ -109,23 +109,24 @@ namespace Storage
 
         public SendNodesURLReply SendNodesURL(SendNodesURLRequest request)
         {
-            foreach (string key in request.Workers.Keys)
-            {
-                workersIdToURL.Add(key, request.Workers.GetValueOrDefault(key));
-                Console.WriteLine("Worker: " + key + " URL: " + workersIdToURL.GetValueOrDefault(key));
-            }
-
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
-            foreach (string key in request.Storages.Keys)
+            Grpc.Net.Client.GrpcChannel channel;
+
+            foreach (int key in request.Storages.Keys)
             {
                 storagesIdToURL.Add(key, request.Storages.GetValueOrDefault(key));
+                
                 Console.WriteLine("Storage: " + key + " URL: " + storagesIdToURL.GetValueOrDefault(key));
 
-                channels[key] = Grpc.Net.Client.GrpcChannel.ForAddress(storagesIdToURL.GetValueOrDefault(key));
-                clients[key] = new StorageService.StorageServiceClient(channels[key]);
+                channel = Grpc.Net.Client.GrpcChannel.ForAddress(storagesIdToURL.GetValueOrDefault(key));
+                storageClients[key] = new StorageService.StorageServiceClient(channel);
 
             }
+
+            replicaId = request.ReplicaId;
+            storageImpl.replicaId = replicaId;
+            replicationFactor = request.ReplicationFactor;
 
             return new SendNodesURLReply();
         }

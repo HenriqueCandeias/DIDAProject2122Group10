@@ -10,9 +10,9 @@ namespace Worker
     {
         WorkerDomain domain;
 
-        public WorkerServer(int gossip_delay, string puppet_master_URL)
+        public WorkerServer(int worker_delay, string puppet_master_URL)
         {
-            domain = new WorkerDomain(gossip_delay, puppet_master_URL);
+            domain = new WorkerDomain(worker_delay, puppet_master_URL);
         }
 
         public override Task<SendNodesURLReply> SendNodesURL(SendNodesURLRequest request, ServerCallContext context)

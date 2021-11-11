@@ -40,7 +40,7 @@ namespace PCS
                 WindowStyle = ProcessWindowStyle.Normal,
                 FileName = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Worker\\bin\\Debug\\netcoreapp3.1\\Worker.exe",
 
-                Arguments = request.ServerId + " " + request.Url + " " + request.GossipDelay,
+                Arguments = request.ServerId + " " + request.Url + " " + request.WorkerDelay,
             };
 
             if (request.DebugActive)
@@ -49,27 +49,34 @@ namespace PCS
             Process.Start(p_info);
 
             Console.WriteLine("Worker created. URL: " + request.Url + " Id: " + request.ServerId + 
-                " Gossip Delay: " + request.GossipDelay + " Debug Active: " + request.DebugActive.ToString() + ".");
+                " Worker Delay: " + request.WorkerDelay + " Debug Active: " + request.DebugActive.ToString() + ".");
 
             return new StartWorkerReply();
         }
 
         public StartStorageReply StartStorage(StartStorageRequest request)
         {
-            ProcessStartInfo p_info = new ProcessStartInfo
+            try
             {
-                UseShellExecute = true,
-                CreateNoWindow = false,
-                WindowStyle = ProcessWindowStyle.Normal,
-                FileName = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Storage\\bin\\Debug\\netcoreapp3.1\\Storage.exe",
+                ProcessStartInfo p_info = new ProcessStartInfo
+                {
+                    UseShellExecute = true,
+                    CreateNoWindow = false,
+                    WindowStyle = ProcessWindowStyle.Normal,
+                    FileName = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "\\Storage\\bin\\Debug\\netcoreapp3.1\\Storage.exe",
 
-                Arguments = request.ServerId + " " + request.Url + " " + request.GossipDelay + " " + request.ReplicaId,
-            };
+                    Arguments = request.Url + " " + request.GossipDelay,
+                };
 
-            Process.Start(p_info);
+                Process.Start(p_info);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
 
             Console.WriteLine(
-                "Storage created. URL: " + request.Url + " Id: " + request.ServerId + " Gossip Delay: " + request.GossipDelay + " Replica Id:" + request.ReplicaId + "."
+                "Storage created. URL: " + request.Url + " Gossip Delay: " + request.GossipDelay + "."
             );
 
             return new StartStorageReply();

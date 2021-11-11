@@ -10,8 +10,8 @@ service WorkerService {
 }
 
 message SendNodesURLRequest {
-	map<string, string> workers = 1;
-	map<string, string> storages = 2;
+	map<int32, string> storages = 1;
+	float replicationFactor = 2;
 }
 
 message SendNodesURLReply {

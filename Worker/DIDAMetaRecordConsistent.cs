@@ -9,5 +9,7 @@ namespace DIDAWorker
         public Dictionary<string, DIDAVersion> RecordIdToConsistentVersion = new Dictionary<string, DIDAVersion>();
 
         public bool appIsInconsistent = false;
+
+        public float replicationFactor = 0;
     }
 }

@@ -20,7 +20,7 @@ message StartSchedulerReply {
 message StartWorkerRequest {
 	string serverId = 1;
 	string url = 2;
-	int32 gossipDelay = 3;
+	int32 workerDelay = 3;
 	bool debugActive = 4;
 	string puppetMasterURL = 5;
 }
@@ -30,10 +30,8 @@ message StartWorkerReply {
 }
 
 message StartStorageRequest {
-	string serverId = 1;
-	string url = 2;
-	int32 gossipDelay = 3;
-	int32 replicaId = 4;
+	string url = 1;
+	int32 gossipDelay = 2;
 }
 
 message StartStorageReply {

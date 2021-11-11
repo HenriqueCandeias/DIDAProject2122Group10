@@ -1,0 +1,17 @@
+﻿syntax = "proto3";
+
+package storage;
+
+service StorageService {
+	rpc SendNodesURL(SendNodesURLRequest) returns (SendNodesURLReply);
+}
+
+message SendNodesURLRequest {
+	map<int32, string> storages = 1;
+	int32 replicaId = 2;
+	float replicationFactor = 3;
+}
+
+message SendNodesURLReply {
+
+}

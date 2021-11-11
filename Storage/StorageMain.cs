@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using DIDAStorage;
 using Grpc.Core;
@@ -14,17 +15,15 @@ namespace Storage
         static void Main(string[] args)
         {
             try {
-                int port = Int32.Parse(args[1].Split(':')[2]);
+                int port = Int32.Parse(args[0].Split(':')[2]);
 
-                int gossip_delay = Int32.Parse(args[2]);
-
-                int replica_id = Int32.Parse(args[3]);
+                int gossip_delay = Int32.Parse(args[1]);
 
                 Console.WriteLine("Starting Storage Server on Port: " + port);
 
                 Server server = new Server
                 {
-                    Services = { StorageService.BindService(new StorageServer(gossip_delay, replica_id)) },
+                    Services = { StorageService.BindService(new StorageServer(gossip_delay)) },
                     Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) },
                 };
 
@@ -39,7 +38,7 @@ namespace Storage
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception in PCS:\r\n");
+                Console.WriteLine("Exception in StorageMain:\r\n");
                 Console.WriteLine(e.ToString());
             }
         }

@@ -10,9 +10,9 @@ namespace Storage
     {
         private StorageInterface domain;
 
-        public StorageServer(int gossip_delay, int replica_id)
+        public StorageServer(int gossip_delay)
         {
-            domain = new StorageInterface(gossip_delay, replica_id);
+            domain = new StorageInterface(gossip_delay);
         }
 
         public override Task<SendNodesURLReply> SendNodesURL(SendNodesURLRequest request, ServerCallContext context)

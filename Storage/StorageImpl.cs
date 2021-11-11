@@ -7,7 +7,7 @@ namespace Storage
 {
     public class StorageImpl : IDIDAStorage
     {
-        private int replicaId;
+        public int replicaId;
 
         private const int maxVersions = 3;
 
@@ -31,11 +31,6 @@ namespace Storage
             versionNumber = -1,
             replicaId = -1,
         };
-
-        public StorageImpl(int replica_id)
-        {
-            replicaId = replica_id;
-        }
 
         public DIDARecord read(string id, DIDAVersion version)
         {

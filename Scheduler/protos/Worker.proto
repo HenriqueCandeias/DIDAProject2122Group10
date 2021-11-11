@@ -3,7 +3,17 @@
 package worker;
 
 service WorkerService {
+	rpc SendNodesURL(SendNodesURLRequest) returns (SendNodesURLReply);
 	rpc StartApp(StartAppRequest) returns (StartAppReply);
+}
+
+message SendNodesURLRequest {
+	map<int32, string> storages = 1;
+	float replicationFactor = 2;
+}
+
+message SendNodesURLReply {
+
 }
 
 message StartAppRequest {

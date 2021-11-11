@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Worker;
+using Storage;
 
 namespace Scheduler
 {
@@ -12,11 +13,13 @@ namespace Scheduler
     {
         private int executionId = 0;
 
+        private const float replicationFactor = 0;
+
         private Queue<string> workersId = new Queue<string>();
 
         private Dictionary<string, string> workersIdToURL = new Dictionary<string, string>();
 
-        private Dictionary<string, string> storagesIdToURL = new Dictionary<string, string>();
+        private Dictionary<int, string> storagesIdToURL = new Dictionary<int, string>();
 
         private Dictionary<string, WorkerService.WorkerServiceClient> workersIdToClient = new Dictionary<string, WorkerService.WorkerServiceClient>();
 
@@ -24,6 +27,8 @@ namespace Scheduler
 
         public SendNodesURLReply SendNodesURL(SendNodesURLRequest request)
         {
+            //Configure workersIdToURL
+
             foreach (string key in request.Workers.Keys)
             {
                 workersIdToURL.Add(key, request.Workers.GetValueOrDefault(key));
@@ -31,24 +36,70 @@ namespace Scheduler
                 workersId.Enqueue(key);
             }
 
+            //Configure storagesIdToURL
+
+            int highestReplicaId = -1;
+
             foreach (string key in request.Storages.Keys)
             {
-                storagesIdToURL.Add(key, request.Storages.GetValueOrDefault(key));
-                Console.WriteLine("Storage: " + key + " URL: " + storagesIdToURL.GetValueOrDefault(key));
+                storagesIdToURL.Add(++highestReplicaId, request.Storages.GetValueOrDefault(key));
+                Console.WriteLine("Storage: " + key + " Id: " + highestReplicaId + " URL: " + storagesIdToURL.GetValueOrDefault(highestReplicaId));
             }
+
+            //Create and store gRPC clients for the workers
 
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
             GrpcChannel channel;
-            WorkerService.WorkerServiceClient client;
+            WorkerService.WorkerServiceClient workerClient;
+
             foreach (KeyValuePair<string, string> pair in workersIdToURL)
             {
                 channel = GrpcChannel.ForAddress(pair.Value);
-                client = new WorkerService.WorkerServiceClient(channel);
+                workerClient = new WorkerService.WorkerServiceClient(channel);
 
-                workersIdToClient.Add(pair.Key, client);
-                workersURLToClient.Add(pair.Value, client);
+                workersIdToClient.Add(pair.Key, workerClient);
+                workersURLToClient.Add(pair.Value, workerClient);
             }
+
+            //Inform the worker nodes about all storage nodes and the replicationFactor
+
+            Worker.SendNodesURLRequest sendNodesToWorkersRequest = new Worker.SendNodesURLRequest();
+            sendNodesToWorkersRequest.ReplicationFactor = replicationFactor;
+
+            foreach(KeyValuePair<int, string> pair in storagesIdToURL)
+            {
+                sendNodesToWorkersRequest.Storages.Add(pair.Key, pair.Value);
+            }
+
+            foreach(KeyValuePair<string, WorkerService.WorkerServiceClient> pair in workersIdToClient)
+            {
+                pair.Value.SendNodesURL(sendNodesToWorkersRequest);
+            }
+
+            //Inform the storage nodes about all storage nodes and the replicationFactor
+
+            Storage.SendNodesURLRequest sendNodesToStoragesRequest = new Storage.SendNodesURLRequest();
+            sendNodesToStoragesRequest.ReplicationFactor = replicationFactor;
+
+            foreach (KeyValuePair<int, string> pair in storagesIdToURL)
+            {
+                sendNodesToStoragesRequest.Storages.Add(pair.Key, pair.Value);
+            }
+
+            StorageService.StorageServiceClient storageClient;
+
+            //Send the prepared request to each storage node
+            foreach (KeyValuePair<int, string> pair in storagesIdToURL)
+            {
+                Console.WriteLine("ReplicaId: " + pair.Key + " ReplicaURL: " + pair.Value);
+                channel = GrpcChannel.ForAddress(pair.Value);
+                storageClient = new StorageService.StorageServiceClient(channel);
+
+                sendNodesToStoragesRequest.ReplicaId = pair.Key;
+                storageClient.SendNodesURL(sendNodesToStoragesRequest);
+            }
+
 
             return new SendNodesURLReply();
         }
@@ -68,7 +119,6 @@ namespace Scheduler
                     DidaMetaRecord = new DIDAMetaRecord()
                     {
                         Id = executionId,
-                        //Configure meta information...
                     },
                     Input = request.Input,
                     Next = 0,
