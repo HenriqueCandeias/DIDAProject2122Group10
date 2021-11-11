@@ -30,7 +30,7 @@ namespace DIDAOperator
                 Id = "myRecord",
                 Val = myOutput,
             });
-
+            
             storageProxy.read(new DIDAReadRequest
             {
                 Id = "myRecord",
@@ -68,10 +68,10 @@ namespace DIDAOperator
             DIDAVersion newVersion = storageProxy.updateIfValueIs(new DIDAUpdateIfRequest
             {
                 Id = "myRecord",
-                Oldvalue = "2",
+                Oldvalue = "3",
                 Newvalue = "10",
             });
-
+            
             if (newVersion.VersionNumber != -1)
             {
                 Console.WriteLine("UpdateIf SUCCESS");

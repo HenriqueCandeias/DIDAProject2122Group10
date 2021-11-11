@@ -133,6 +133,7 @@ namespace Storage
             DIDARecord newRecord = new DIDARecord
             {
                 id = id,
+                version = newVersion,
                 val = val,
             };
 

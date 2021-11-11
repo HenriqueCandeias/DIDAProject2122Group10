@@ -14,8 +14,6 @@ namespace Worker
 
         SortedDictionary<int, StorageService.StorageServiceClient> replicaIdToClient = new SortedDictionary<int, StorageService.StorageServiceClient>();
 
-        private int numberOfStorages = 0;
-
         public static readonly DIDARecordReply nullDIDARecordReply = new DIDARecordReply
         {
             Id = "",
@@ -43,54 +41,14 @@ namespace Worker
                 replicaIdToClient.Add(Int32.Parse(n.serverId), new StorageService.StorageServiceClient(channel));
             }
 
-            numberOfStorages = replicaIdToClient.Count;
-
             this.metaRecord = metaRecord;
-        }
-
-        private SortedDictionary<int, StorageService.StorageServiceClient> LocateStorageNodesWithRecord(string id)
-        {
-            byte[] encodedRecordId = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(id));
-            int hashedRecordId = BitConverter.ToInt32(encodedRecordId, 0) % numberOfStorages;
-
-            Console.WriteLine("Record Id: " + id + " hashedRecordId: " + hashedRecordId);
-
-            SortedDictionary<int, StorageService.StorageServiceClient> nodes = new SortedDictionary<int, StorageService.StorageServiceClient>();
-
-            int numberOfStoragesWithRecord = 1 + (int)(numberOfStorages * metaRecord.replicationFactor);
-
-            foreach (KeyValuePair<int, StorageService.StorageServiceClient> pair in replicaIdToClient)
-            {
-                if (pair.Key > hashedRecordId)
-                {
-                    if (nodes.Count == numberOfStoragesWithRecord)
-                        break;
-
-                    nodes.Add(pair.Key, pair.Value);
-                }
-
-            }
-
-            if (nodes.Count < numberOfStoragesWithRecord)
-            {
-                foreach (KeyValuePair<int, StorageService.StorageServiceClient> pair in replicaIdToClient)
-                {
-                    if (nodes.Count == numberOfStoragesWithRecord)
-                        break;
-
-                    //Get the first nodes (loop around the Consistent Hashing ring of storage servers)
-                    nodes.Add(pair.Key, pair.Value);
-                }
-            }
-
-            return nodes;
         }
 
         public virtual DIDAWorker.DIDARecordReply read(DIDAWorker.DIDAReadRequest r)
         {
-            SortedDictionary<int, StorageService.StorageServiceClient> storagesWithRecord = LocateStorageNodesWithRecord(r.Id);
-
             bool versionChangedAccordingToMetaRecord = false;
+
+            List<int> orderOfReplicaIdToRead = GetOrderOfReplicasToReadFrom(r.Id);
 
             if (r.Version.Equals(nullDIDAVersion))
             {
@@ -110,14 +68,14 @@ namespace Worker
 
             ReadStorageReply reply = null;
 
-            foreach (KeyValuePair<int, StorageService.StorageServiceClient> pair in storagesWithRecord)
+            foreach (int replicaId in orderOfReplicaIdToRead)
             {
                 //First check if the desired replica has the desired version. If not, try again with the next replicas. If no replica has the desired version, then it has already been
                 //garbage-collected (maxVersions) or replica crashed. In that case, the app should terminate (no more workers in the chain will execute the remaining operators of the app).
 
                 try
                 {
-                    reply = pair.Value.ReadStorage(new ReadStorageRequest
+                    reply = replicaIdToClient.GetValueOrDefault(replicaId).ReadStorage(new ReadStorageRequest
                     {
                         Id = r.Id,
                         DidaVersion = new DidaVersion
@@ -129,8 +87,8 @@ namespace Worker
                 }
                 catch (Grpc.Core.RpcException)
                 {
-                    Console.WriteLine("Replica with id " + pair.Key.ToString() + " crashed while performing read operation.");
-                    replicaIdToClient.Remove(pair.Key);
+                    Console.WriteLine("Replica with id " + replicaId + " crashed while performing read operation.");
+                    replicaIdToClient.Remove(replicaId);
                     continue;
                 }
                 
@@ -174,33 +132,60 @@ namespace Worker
             };
         }
 
+        private List<int> GetOrderOfReplicasToReadFrom(string recordId)
+        {
+            byte[] encodedRecordId = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(recordId));
+            int hashedRecordId = BitConverter.ToInt32(encodedRecordId, 0) % replicaIdToClient.Count;
+
+            List<int> replicaIdOrdered = new List<int>();
+
+            int currentReplicaId = (hashedRecordId + 1) % replicaIdToClient.Count;
+
+            int amountOfReplicasToReadFrom = (int)(replicaIdToClient.Count * metaRecord.replicationFactor);
+
+            for (int replicaCounter = 0; replicaCounter <= amountOfReplicasToReadFrom; replicaCounter++, currentReplicaId++)
+            {
+                currentReplicaId %= replicaIdToClient.Count;
+
+                replicaIdOrdered.Add(currentReplicaId);
+            }
+
+            return replicaIdOrdered;
+        }
+
         public virtual DIDAWorker.DIDAVersion write(DIDAWorker.DIDAWriteRequest r)
         {
             byte[] encodedRecordId = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(r.Id));
-            int hashedRecordId = BitConverter.ToInt32(encodedRecordId, 0) % numberOfStorages;
+            int hashedRecordId = BitConverter.ToInt32(encodedRecordId, 0) % replicaIdToClient.Count;
 
-            SortedDictionary<int, StorageService.StorageServiceClient> storagesWithRecord = LocateStorageNodesWithRecord(r.Id);
+            int currentReplicaId = (hashedRecordId + 1) % replicaIdToClient.Count;
+            int initialNumberOfStorages = replicaIdToClient.Count;
 
             WriteStorageReply reply = null;
 
-            foreach (KeyValuePair<int, StorageService.StorageServiceClient> pair in storagesWithRecord)
+            for(int attemptedReplicas = 0; attemptedReplicas <= initialNumberOfStorages; currentReplicaId++, attemptedReplicas++)
             {
+                currentReplicaId %= initialNumberOfStorages;
+
                 //First check if the desired replica has the desired version. If not, try again with the next replicas. If no replica has the desired version, then it has already been
                 //garbage-collected (maxVersions) or replica crashed. In that case, the app should terminate (no more workers in the chain will execute the remaining operators of the app).
 
                 try
                 {
-                    reply = pair.Value.WriteStorage(new WriteStorageRequest
+                    StorageService.StorageServiceClient client = replicaIdToClient.GetValueOrDefault(currentReplicaId);
+                    if (client == null)
+                        continue;
+
+                    reply = client.WriteStorage(new WriteStorageRequest
                     {
                         Id = r.Id,
-                        Val = r.Val
+                        Val = r.Val,
                     });
                 }
                 catch (Grpc.Core.RpcException)
                 {
-                    Console.WriteLine("Replica with id " + pair.Key.ToString() + " crashed while performing write operation.");
-                    replicaIdToClient.Remove(pair.Key);
-                    numberOfStorages--;
+                    Console.WriteLine("Replica with id " + currentReplicaId + " crashed while performing write operation.");
+                    replicaIdToClient.Remove(currentReplicaId);
                     continue;
                 }
 
@@ -230,18 +215,28 @@ namespace Worker
 
         public virtual DIDAWorker.DIDAVersion updateIfValueIs(DIDAWorker.DIDAUpdateIfRequest r)
         {
-            SortedDictionary<int, StorageService.StorageServiceClient> storagesWithRecord = LocateStorageNodesWithRecord(r.Id);
+            byte[] encodedRecordId = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(r.Id));
+            int hashedRecordId = BitConverter.ToInt32(encodedRecordId, 0) % replicaIdToClient.Count;
+
+            int currentReplicaId = (hashedRecordId + 1) % replicaIdToClient.Count;
+            int initialNumberOfStorages = replicaIdToClient.Count;
 
             UpdateIfReply reply = null;
 
-            foreach (KeyValuePair<int, StorageService.StorageServiceClient> pair in storagesWithRecord)
+            for (int attemptedReplicas = 0; attemptedReplicas <= initialNumberOfStorages; currentReplicaId++, attemptedReplicas++)
             {
+                currentReplicaId %= initialNumberOfStorages;
+
                 //First check if the desired replica has the desired version. If not, try again with the next replicas. If no replica has the desired version, then it has already been
                 //garbage-collected (maxVersions) or replica crashed. In that case, the app should terminate (no more workers in the chain will execute the remaining operators of the app).
 
                 try
                 {
-                    reply = pair.Value.UpdateIf(new UpdateIfRequest
+                    StorageService.StorageServiceClient client = replicaIdToClient.GetValueOrDefault(currentReplicaId);
+                    if (client == null)
+                        continue;
+
+                    reply = client.UpdateIf(new UpdateIfRequest
                     {
                         Id = r.Id,
                         NewValue = r.Newvalue,
@@ -250,9 +245,8 @@ namespace Worker
                 }
                 catch (Grpc.Core.RpcException)
                 {
-                    Console.WriteLine("Replica with id " + pair.Key.ToString() + " crashed while performing updateIfValueIs operation.");
-                    replicaIdToClient.Remove(pair.Key);
-                    numberOfStorages--;
+                    Console.WriteLine("Replica with id " + currentReplicaId + " crashed while performing updateIf operation.");
+                    replicaIdToClient.Remove(currentReplicaId);
                     continue;
                 }
 
