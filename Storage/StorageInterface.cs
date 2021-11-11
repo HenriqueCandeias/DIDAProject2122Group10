@@ -220,7 +220,7 @@ namespace Storage
             {
                 foreach(DIDARecord record in recordList.Value)
                 {
-                    Console.WriteLine("ID:" + record.id + " Val:" + record.val + " Version:" + record.version);
+                    Console.WriteLine("ID:" + record.id + " Val:" + record.val + " Version:" + record.version.versionNumber);
                 }
             }
             return new ListReply();
