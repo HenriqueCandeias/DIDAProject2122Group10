@@ -57,7 +57,7 @@ namespace Storage
             return nullDIDARecord;
         }
 
-        public DIDAVersion updateIfValueIs(string id, string oldValue, string newValue)
+        public DIDAVersion updateIfValueIs(string id, string oldValue, string newValue, bool needLog)
         {
             List<DIDARecord> didaRecords = recordIdToRecords.GetValueOrDefault(id);
 
@@ -99,16 +99,20 @@ namespace Storage
                         recordIdToRecords.GetValueOrDefault(id).RemoveAt(0);
                     }
 
-                    log.Add(new LogStruct { 
-                        Id = id,
-                        OldVal = oldValue,
-                        NewVal = newValue,
-                        DidaVersion = new DidaVersion
+                    if (needLog)
+                    {
+                        log.Add(new LogStruct
                         {
-                            VersionNumber = newVersion.versionNumber,
-                            ReplicaId = newVersion.replicaId,
-                        },
-                    });
+                            Id = id,
+                            OldVal = oldValue,
+                            NewVal = newValue,
+                            DidaVersion = new DidaVersion
+                            {
+                                VersionNumber = newVersion.versionNumber,
+                                ReplicaId = newVersion.replicaId,
+                            },
+                        });
+                    }
 
                     return newVersion;
                 }
@@ -117,7 +121,7 @@ namespace Storage
             return nullDIDAVersion;
         }
 
-        public DIDAVersion write(string id, string val)
+        public DIDAVersion write(string id, string val, bool needLog)
         {
             DIDARecord mostRecentRecord = GetMostRecentRecord(id);
 
@@ -156,16 +160,20 @@ namespace Storage
                 recordIdToRecords.GetValueOrDefault(id).RemoveAt(0);
             }
 
-            log.Add(new LogStruct
+            if (needLog)
             {
-                Id = id,
-                NewVal = val,
-                DidaVersion = new DidaVersion
+                log.Add(new LogStruct
                 {
-                    VersionNumber = newVersion.versionNumber,
-                    ReplicaId = newVersion.replicaId,
-                },
-            });
+                    Id = id,
+                    NewVal = val,
+                    DidaVersion = new DidaVersion
+                    {
+                        VersionNumber = newVersion.versionNumber,
+                        ReplicaId = newVersion.replicaId,
+                    },
+                });
+                Console.WriteLine("added to log");
+            }
 
             return newVersion;
         }
@@ -194,7 +202,7 @@ namespace Storage
         public List<LogStruct> GetLog()
         {
             List<LogStruct> lastLog = log;
-            log = new List<LogStruct>();
+            //log = new List<LogStruct>();
             return lastLog;
         }
     }
