@@ -13,7 +13,7 @@ namespace Scheduler
     {
         private int executionId = 0;
 
-        private const float replicationFactor = 0;
+        private const float replicationFactor = 0.75f;
 
         private Queue<string> workersId = new Queue<string>();
 

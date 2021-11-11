@@ -18,7 +18,7 @@ namespace Worker
     {
         private int workerDelay;
 
-        private float replicationFactor = 0;
+        private float replicationFactor;
 
         private string puppetMasterURL;
 

@@ -12,13 +12,15 @@ namespace Storage
     {
         private int replicaId;
 
-        private float replicationFactor = 0;
+        private float replicationFactor;
+
+        private int numReplicas;
 
         public StorageImpl storageImpl;
 
         private Dictionary<int, string> storagesIdToURL = new Dictionary<int, string>();
 
-        private Dictionary<int, StorageService.StorageServiceClient> storageClients = new Dictionary<int, StorageService.StorageServiceClient>();
+        private SortedDictionary<int, StorageService.StorageServiceClient> storageClients = new SortedDictionary<int, StorageService.StorageServiceClient>();
 
 
         private static readonly ReadStorageReply nullReadStorageReply = new ReadStorageReply
@@ -45,43 +47,58 @@ namespace Storage
 
             List<LogStruct> allLogs = new List<LogStruct>();
 
-            foreach (KeyValuePair<int, StorageService.StorageServiceClient> pair in storageClients)
+            int currentReplica = replicaId;
+
+            for (int i = 0; i < numReplicas; i++)
             {
+                //mandr log apenas do que e seu
+                currentReplica = currentReplica == 0 ? storageClients.Count() - 1 : --currentReplica;
+
                 try
                 {
-                    reply = pair.Value.RequestLog(new GossipRequest
+                    reply = storageClients.GetValueOrDefault(currentReplica).RequestLog(new GossipRequest
                     {
                         LogRequest = "resquest log from :" + replicaId,
                     });
 
                     allLogs.AddRange(reply.LogReply);
-                    Console.WriteLine(reply);
+                    if(reply.LogReply.Any())
+                    {
+                        Console.WriteLine("recieved from: " + currentReplica);
+                        Console.WriteLine(reply);
+                    }
                 }
                 catch
                 {
-                    Console.WriteLine("grpc connection to " + pair.Key + "has expired");
+                    Console.WriteLine("grpc connection to " + currentReplica + "has expired");
 
-                    storagesIdToURL.Remove(pair.Key);
-                    storageClients.Remove(pair.Key);
+                    storagesIdToURL.Remove(currentReplica);
+                    storageClients.Remove(currentReplica);
+
+                    i--;
+                    numReplicas = (int)Math.Ceiling((replicationFactor * storageClients.Count()) - 1);
 
                     //send failed storage info above
                 }
+
             }
 
             List<LogStruct> SortedList = allLogs.OrderBy(l => l.Id).ThenBy(l => l.DidaVersion.VersionNumber).ToList();
 
-            allLogs.ForEach(p => Console.WriteLine(p));
-            SortedList.ForEach(p => Console.WriteLine(p));
+            //if all equal chose higher id
+
+            //allLogs.ForEach(p => Console.WriteLine(p));
+            //SortedList.ForEach(p => Console.WriteLine(p));
 
             foreach (var items in SortedList)
             {
                 if (string.IsNullOrEmpty(items.OldVal))
                 {
-                    storageImpl.write(items.Id, items.NewVal);
+                    storageImpl.write(items.Id, items.NewVal, false);
                 }
                 else
                 {
-                    storageImpl.updateIfValueIs(items.Id, items.OldVal, items.NewVal);
+                    storageImpl.updateIfValueIs(items.Id, items.OldVal, items.NewVal, false);
                 }
             }
         }
@@ -99,8 +116,6 @@ namespace Storage
 
         public GossipReply RequestLog(GossipRequest request)
         {
-            Console.WriteLine(request.LogRequest);
-
             var gossipreply = new GossipReply();
             gossipreply.LogReply.Add(storageImpl.GetLog());
 
@@ -127,13 +142,14 @@ namespace Storage
             replicaId = request.ReplicaId;
             storageImpl.replicaId = replicaId;
             replicationFactor = request.ReplicationFactor;
+            numReplicas = (int)Math.Ceiling((replicationFactor * storageClients.Count()) - 1);
 
             return new SendNodesURLReply();
         }
 
         public UpdateIfReply UpdateIf(UpdateIfRequest request)
         {
-            DIDAVersion reply = storageImpl.updateIfValueIs(request.Id, request.OldValue, request.NewValue);
+            DIDAVersion reply = storageImpl.updateIfValueIs(request.Id, request.OldValue, request.NewValue, true);
 
             return new UpdateIfReply
             {
@@ -148,7 +164,7 @@ namespace Storage
 
         public WriteStorageReply WriteStorage(WriteStorageRequest request)
         {
-            DIDAVersion reply = storageImpl.write(request.Id, request.Val);
+            DIDAVersion reply = storageImpl.write(request.Id, request.Val, true);
 
             return new WriteStorageReply
             {
@@ -218,7 +234,7 @@ namespace Storage
 
         public PopulateReply Populate(PopulateRequest request)
         {
-            storageImpl.write(request.Id, request.Val);
+            storageImpl.write(request.Id, request.Val, true);
             return new Storage.PopulateReply();
         }
     }
