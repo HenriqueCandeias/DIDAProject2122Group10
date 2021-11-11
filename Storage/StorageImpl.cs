@@ -199,10 +199,17 @@ namespace Storage
             return mostRecentRecord;
         }
 
-        public List<LogStruct> GetLog()
+        public List<LogStruct> GetLog(int clock)
         {
-            List<LogStruct> lastLog = log;
+            List<LogStruct> lastLog = new List<LogStruct>();
             //log = new List<LogStruct>();
+
+            for(int i = clock; i < log.Count; i++)
+            {
+                Console.WriteLine(i);
+                lastLog.Add(log[i]);
+            }
+
             return lastLog;
         }
     }

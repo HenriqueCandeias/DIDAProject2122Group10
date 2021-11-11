@@ -16,6 +16,8 @@ namespace Storage
 
         private int numReplicas;
 
+        public List<int> clocks;
+
         public StorageImpl storageImpl;
 
         private Dictionary<int, string> storagesIdToURL = new Dictionary<int, string>();
@@ -59,9 +61,11 @@ namespace Storage
                     reply = storageClients.GetValueOrDefault(currentReplica).RequestLog(new GossipRequest
                     {
                         LogRequest = "resquest log from :" + replicaId,
+                        Clock = clocks[currentReplica],
                     });
 
                     allLogs.AddRange(reply.LogReply);
+                    clocks[currentReplica] += reply.LogReply.Count;
                     if(reply.LogReply.Any())
                     {
                         Console.WriteLine("recieved from: " + currentReplica);
@@ -117,7 +121,7 @@ namespace Storage
         public GossipReply RequestLog(GossipRequest request)
         {
             var gossipreply = new GossipReply();
-            gossipreply.LogReply.Add(storageImpl.GetLog());
+            gossipreply.LogReply.Add(storageImpl.GetLog(request.Clock));
 
             return gossipreply;
         }
@@ -143,6 +147,8 @@ namespace Storage
             storageImpl.replicaId = replicaId;
             replicationFactor = request.ReplicationFactor;
             numReplicas = (int)Math.Ceiling((replicationFactor * storageClients.Count()) - 1);
+
+            clocks = new List<int>(new int[storageClients.Count()]);
 
             return new SendNodesURLReply();
         }

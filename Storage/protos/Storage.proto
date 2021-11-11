@@ -102,6 +102,7 @@ message PopulateReply {
 
 message GossipRequest { 
 	string LogRequest = 1;
+	int32 Clock = 2;
 }
 
 message GossipReply {
