@@ -12,6 +12,7 @@ service StorageService {
 	rpc Crash(CrashRequest) returns (CrashReply);
 	rpc Populate(PopulateRequest) returns (PopulateReply);
 	rpc RequestLog (GossipRequest) returns (GossipReply);
+	rpc CrashReport (CrashRepRequests) returns (CrashRepReply);
 }
 
 //// structures ////
@@ -114,4 +115,12 @@ message LogStruct{
 	optional string oldVal = 2;
 	string newVal = 3;
 	DidaVersion didaVersion = 4;
+}
+
+message CrashRepRequests {
+	int32 id = 1;
+}
+
+message CrashRepReply {
+	
 }

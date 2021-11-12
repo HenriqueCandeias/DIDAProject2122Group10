@@ -172,7 +172,6 @@ namespace Storage
                         ReplicaId = newVersion.replicaId,
                     },
                 });
-                Console.WriteLine("added to log");
             }
 
             return newVersion;

@@ -79,10 +79,13 @@ namespace Storage
                     storagesIdToURL.Remove(currentReplica);
                     storageClients.Remove(currentReplica);
 
+                    storageClients.AsParallel().ForAll(entry => entry.Value.CrashReport(new CrashRepRequests
+                    {
+                        Id = currentReplica,
+                    }));
+
                     i--;
                     numReplicas = (int)Math.Ceiling((replicationFactor * storageClients.Count()) - 1);
-
-                    //send failed storage info above
                 }
 
             }
@@ -105,6 +108,17 @@ namespace Storage
                     storageImpl.updateIfValueIs(items.Id, items.OldVal, items.NewVal, false);
                 }
             }
+        }
+
+        public CrashRepReply CrashReport(CrashRepRequests request)
+        {
+            if (storagesIdToURL.ContainsKey(request.Id))
+            {
+                storagesIdToURL.Remove(request.Id);
+                storageClients.Remove(request.Id);
+                Console.WriteLine("removed :" + request.Id);
+            }
+            return new CrashRepReply();
         }
 
         private static void SetTimer(int gossip_delay, ElapsedEventHandler Gossip)
