@@ -11,6 +11,7 @@ using Grpc.Net.Client;
 using Worker;
 using DIDAOperator;
 using System.Threading;
+using Storage;
 
 namespace Worker
 {
@@ -30,6 +31,8 @@ namespace Worker
 
         private Dictionary<string, WorkerService.WorkerServiceClient> workersIdToClient = new Dictionary<string, WorkerService.WorkerServiceClient>();
 
+        private Dictionary<int, StorageService.StorageServiceClient> storagesIdToClient = new Dictionary<int, StorageService.StorageServiceClient>();
+
         public WorkerDomain(int worker_delay, string puppet_master_URL, bool debug)
         {
             workerDelay = worker_delay;
@@ -39,8 +42,13 @@ namespace Worker
 
         public SendNodesURLReply SendNodesURL(SendNodesURLRequest request)
         {
+            GrpcChannel channel;
+
             foreach (int key in request.Storages.Keys)
             {
+                channel = GrpcChannel.ForAddress(request.Storages[key]);
+                storagesIdToClient.Add(key, new StorageService.StorageServiceClient(channel));
+
                 storagesIdToURL.Add(key, request.Storages.GetValueOrDefault(key));
                 if (debug)
                 {
@@ -48,12 +56,10 @@ namespace Worker
                 }
             }
 
-            GrpcChannel newWorkerChannel;
-
             foreach (string key in request.Workers.Keys)
             {
-                newWorkerChannel = GrpcChannel.ForAddress(request.Workers[key]);
-                workersIdToClient.Add(key, new WorkerService.WorkerServiceClient(newWorkerChannel));
+                channel = GrpcChannel.ForAddress(request.Workers[key]);
+                workersIdToClient.Add(key, new WorkerService.WorkerServiceClient(channel));
                 if (debug)
                 {
                     Console.WriteLine("Worker: " + key + " URL: " + request.Workers[key]);
@@ -128,24 +134,38 @@ namespace Worker
 
             string output = myOperator.ProcessRecord(metaRecordConsistent, request.DidaRequest.Input, previousOutput);
 
-            //Check if the StorageProxy detected that an operator failed. If so, warn all other workers
+            //Check if the StorageProxy detected that an operator failed. If so, warn all other workers and storages
 
             if(metaRecordConsistent.failedReplicasIds.Count > 0)
             {
-                CrashRepRequests crashReportRequest;
+                Worker.CrashRepRequests workerCrashReportRequest;
+                Storage.CrashRepRequests storageCrashReportRequest;
 
                 foreach (int replicaId in metaRecordConsistent.failedReplicasIds)
                 {
-                    crashedStoragesIdToURL.Add(replicaId, storagesIdToURL[replicaId]);
-                    storagesIdToURL.Remove(replicaId);
+                    Console.WriteLine("replicaId that failed: " + replicaId);
 
-                    crashReportRequest = new CrashRepRequests
+                    if (storagesIdToURL.ContainsKey(replicaId))
+                    {
+                        crashedStoragesIdToURL.Add(replicaId, storagesIdToURL[replicaId]);
+                        storagesIdToURL.Remove(replicaId);
+                    }
+
+                    workerCrashReportRequest = new Worker.CrashRepRequests
                     {
                         Id = replicaId,
                     };
 
                     foreach (WorkerService.WorkerServiceClient client in workersIdToClient.Values)
-                        client.CrashReport(crashReportRequest);
+                        client.CrashReport(workerCrashReportRequest);
+
+                    storageCrashReportRequest = new Storage.CrashRepRequests
+                    {
+                        Id = replicaId,
+                    };
+
+                    foreach (StorageService.StorageServiceClient client in storagesIdToClient.Values)
+                        client.CrashReport(storageCrashReportRequest);
                 }
             }
 
@@ -262,6 +282,19 @@ namespace Worker
                 Console.WriteLine("Crashing...");
             Task.Delay(1000).ContinueWith(t => System.Environment.Exit(1));
             return new CrashReply();
+        }
+
+        public CrashRepReply CrashReport(CrashRepRequests request)
+        {
+            Console.WriteLine("Received a Crashreport");
+            if(storagesIdToURL.ContainsKey(request.Id))
+            {
+                crashedStoragesIdToURL.Add(request.Id, storagesIdToURL[request.Id]);
+                storagesIdToURL.Remove(request.Id);
+                storagesIdToClient.Remove(request.Id);
+            }
+            
+            return new CrashRepReply();
         }
     }
 }

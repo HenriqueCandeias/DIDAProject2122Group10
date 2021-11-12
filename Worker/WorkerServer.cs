@@ -65,5 +65,18 @@ namespace Worker
                 throw e;
             }
         }
+
+        public override Task<CrashRepReply> CrashReport(CrashRepRequests request, ServerCallContext context)
+        {
+            try
+            {
+                return Task.FromResult<CrashRepReply>(domain.CrashReport(request));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                throw e;
+            }
+        }
     }
 }

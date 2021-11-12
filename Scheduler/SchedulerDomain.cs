@@ -115,10 +115,6 @@ namespace Scheduler
 
         public StartAppReply StartApp(StartAppRequest request)
         {
-            Console.WriteLine("Received the following operators:");
-            foreach (KeyValuePair<int, string> pair in request.Operators)
-                Console.WriteLine("operator " + pair.Value + " " + pair.Key);
-
             List<DIDAAssignment> chain = GenerateChain(request.Operators);
             
             Worker.StartAppRequest startAppRequest = new Worker.StartAppRequest()

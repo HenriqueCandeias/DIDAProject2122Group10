@@ -7,7 +7,7 @@ service WorkerService {
 	rpc StartApp(StartAppRequest) returns (StartAppReply);
 	rpc Status(StatusRequest) returns (StatusReply);
 	rpc Crash(CrashRequest) returns (CrashReply);
-	rpc CrashReport (CrashRepRequests) returns (CrashRepReply);
+	rpc CrashReport(CrashRepRequests) returns (CrashRepReply);
 }
 
 message SendNodesURLRequest {
