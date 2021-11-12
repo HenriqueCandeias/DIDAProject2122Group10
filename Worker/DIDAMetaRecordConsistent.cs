@@ -11,5 +11,7 @@ namespace DIDAWorker
         public bool appIsInconsistent = false;
 
         public float replicationFactor = 0;
-    }
+
+        public List<int> failedReplicasIds = new List<int>();
+    } 
 }

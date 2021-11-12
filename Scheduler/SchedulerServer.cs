@@ -38,18 +38,5 @@ namespace Scheduler
                 throw e;
             }
         }
-
-        public override Task<StatusReply> Status(StatusRequest request, ServerCallContext context)
-        {
-            try
-            {
-                return Task.FromResult<StatusReply>(domain.Status());
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-                throw e;
-            }
-        }
     }
 }

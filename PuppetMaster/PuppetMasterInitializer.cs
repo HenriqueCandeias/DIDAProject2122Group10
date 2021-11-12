@@ -31,6 +31,10 @@ namespace PuppetMaster
 
         private Dictionary<string, string> storagesIdToURL = new Dictionary<string, string>();
 
+        //Crashed nodes: Id to URL
+
+        private Dictionary<string, string> crashedStoragesIdToURL = new Dictionary<string, string>();
+
         //Id to gRPC client
 
         private SchedulerService.SchedulerServiceClient schedulerClient;
@@ -114,7 +118,7 @@ namespace PuppetMaster
                     break;
 
                 case "populate":
-                    populate(words[1]);
+                    Populate(words[1]);
                     break;
 
                 case "status":
@@ -244,10 +248,6 @@ namespace PuppetMaster
 
         public void Status()
         {
-            Scheduler.StatusRequest schedulerStatusRequest = new Scheduler.StatusRequest();
-
-            schedulerClient.Status(schedulerStatusRequest);
-
             Worker.StatusRequest workerStatusRequest = new Worker.StatusRequest();
 
             foreach (WorkerService.WorkerServiceClient worker in workersIdToClient.Values)
@@ -258,21 +258,37 @@ namespace PuppetMaster
             foreach (StorageService.StorageServiceClient storage in storagesIdToClient.Values)
                 storage.Status(storageStatusRequest);
 
-            //TODO print PuppterMaster status if necessary
+            PrintPuppetMasterStatus();
+        }
 
+        private void PrintPuppetMasterStatus()
+        {
+            Console.WriteLine("PUPPET MASTER STATUS\r\n");
+
+            foreach (KeyValuePair<string, string> pair in schedulerIdToURL)
+                Console.WriteLine("Scheduler - Id: " + pair.Key + " URL: " + pair.Value);
+
+            Console.WriteLine("");
+
+            foreach (KeyValuePair<string, string> pair in workersIdToURL)
+                Console.WriteLine("Worker - Id: " + pair.Key + " URL: " + pair.Value);
+
+            Console.WriteLine("");
+
+            foreach (KeyValuePair<string, string> pair in storagesIdToURL)
+                Console.WriteLine("Active Storage - Id: " + pair.Key + " URL: " + pair.Value);
+
+            Console.WriteLine("");
+
+            foreach (KeyValuePair<string, string> pair in crashedStoragesIdToURL)
+                Console.WriteLine("Crashed Storage - Id: " + pair.Key + " URL: " + pair.Value);
+
+            Console.WriteLine("END OF STATUS\r\n");
         }
 
         /// Executes given action to all servers
         public void ServerGlobal(Action action)
         {
-            foreach (String workerId in workersIdToClient.Keys)
-            {
-                if (action == Action.Crash)
-                {
-                    CrashWorker(workerId);
-                }
-            }
-
             foreach(String storageId in storagesIdToClient.Keys)
             {
                 if (action == Action.List)
@@ -287,48 +303,38 @@ namespace PuppetMaster
         }
 
         /// Finds a server with a specific ID and executed the given action
-        public void ServerFinder(string serverId, Action action)
+        public void ServerFinder(string server_id, Action action)
         {
-            if (workersIdToClient.ContainsKey(serverId))
-            {
-                if(action == Action.Crash)
-                    CrashWorker(serverId);
-            } else if (storagesIdToClient.ContainsKey(serverId))
+            if (storagesIdToClient.ContainsKey(server_id))
             {
                 if (action == Action.List)
                 {
-                    ListStorage(serverId);
+                    ListStorage(server_id);
                 }
                 else
                 {
-                    CrashStorage(serverId);
+                    CrashStorage(server_id);
                 }
             }
                 
         }
 
-        //LIST COMMAND
-
-        public void ListStorage(string serverId)
+        public void ListStorage(string server_id)
         {
             Storage.ListRequest listRequest = new Storage.ListRequest();
-            storagesIdToClient[serverId].List(listRequest);
+            storagesIdToClient[server_id].List(listRequest);
         }
 
-        //CRASH COMMAND
-        public void CrashWorker(string serverId)
-        {
-            Worker.CrashRequest crashRequest = new Worker.CrashRequest();
-            workersIdToClient[serverId].Crash(crashRequest);
-        }
-
-        public void CrashStorage(string serverId)
+        public void CrashStorage(string server_id)
         {
             Storage.CrashRequest crashRequest = new Storage.CrashRequest();
-            storagesIdToClient[serverId].Crash(crashRequest);
+            storagesIdToClient[server_id].Crash(crashRequest);
+            crashedStoragesIdToURL.Add(server_id, storagesIdToURL[server_id]);
+            storagesIdToURL.Remove(server_id);
+            storagesIdToClient.Remove(server_id);
         }
 
-        public void populate(string data_file)
+        public void Populate(string data_file)
         {
             string dataPath = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\" + data_file;
             foreach(string line in File.ReadAllLines(dataPath))

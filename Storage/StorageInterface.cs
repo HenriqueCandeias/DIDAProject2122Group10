@@ -1,4 +1,5 @@
 ﻿using DIDAStorage;
+using Worker;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -20,12 +21,18 @@ namespace Storage
 
         public StorageImpl storageImpl;
 
+        private Dictionary<string, string> workersIdToURL = new Dictionary<string, string>();
+
         private Dictionary<int, string> storagesIdToURL = new Dictionary<int, string>();
+
+        private Dictionary<string, WorkerService.WorkerServiceClient> workerClients = new Dictionary<string, WorkerService.WorkerServiceClient>();
 
         private SortedDictionary<int, StorageService.StorageServiceClient> storageClients = new SortedDictionary<int, StorageService.StorageServiceClient>();
 
-        private List<int> replicasIds = new List<int>();
+        private Dictionary<int, string> crashedStoragesIdToURL = new Dictionary<int, string>();
 
+        private List<int> replicasIds = new List<int>();
+        
         private static readonly ReadStorageReply nullReadStorageReply = new ReadStorageReply
         {
             DidaRecord = new DidaRecord
@@ -56,14 +63,13 @@ namespace Storage
 
             for (int i = 0; i < numReplicas; i++)
             {
-                //mandr log apenas do que e seu
                 currentReplicaIndex = currentReplicaIndex == 0 ? storageClients.Count() - 1 : --currentReplicaIndex;
                 currentReplica = replicasIds[currentReplicaIndex];
                 try
                 {
                     reply = storageClients.GetValueOrDefault(currentReplica).RequestLog(new GossipRequest
                     {
-                        LogRequest = "resquest log from :" + replicaId,
+                        LogRequest = "Request log from :" + replicaId,
                         Clock = clocks[currentReplica],
                     });
 
@@ -71,19 +77,25 @@ namespace Storage
                     clocks[currentReplica] += reply.LogReply.Count;
                     if(reply.LogReply.Any())
                     {
-                        Console.WriteLine("recieved from: " + currentReplica);
+                        Console.WriteLine("received from: " + currentReplica);
                         Console.WriteLine(reply);
                     }
                 }
                 catch
                 {
-                    Console.WriteLine("grpc connection to " + currentReplica + "has expired");
+                    Console.WriteLine("grpc connection to " + currentReplica + " has expired");
 
+                    crashedStoragesIdToURL.Add(currentReplica, storagesIdToURL[currentReplica]);
                     storagesIdToURL.Remove(currentReplica);
                     storageClients.Remove(currentReplica);
                     replicasIds.Remove(currentReplica);
 
-                    storageClients.AsParallel().ForAll(entry => entry.Value.CrashReport(new CrashRepRequests
+                    storageClients.AsParallel().ForAll(entry => entry.Value.CrashReport(new Storage.CrashRepRequests
+                    {
+                        Id = currentReplica,
+                    }));
+
+                    workerClients.AsParallel().ForAll(entry => entry.Value.CrashReport(new Worker.CrashRepRequests
                     {
                         Id = currentReplica,
                     }));
@@ -95,11 +107,6 @@ namespace Storage
             }
 
             List<LogStruct> SortedList = allLogs.OrderBy(l => l.Id).ThenBy(l => l.DidaVersion.VersionNumber).ToList();
-
-            //if all equal chose higher id
-
-            //allLogs.ForEach(p => Console.WriteLine(p));
-            //SortedList.ForEach(p => Console.WriteLine(p));
 
             foreach (var items in SortedList)
             {
@@ -118,8 +125,10 @@ namespace Storage
         {
             if (storagesIdToURL.ContainsKey(request.Id))
             {
+                crashedStoragesIdToURL.Add(request.Id, storagesIdToURL[request.Id]);
                 storagesIdToURL.Remove(request.Id);
                 storageClients.Remove(request.Id);
+                
                 Console.WriteLine("removed :" + request.Id);
             }
             return new CrashRepReply();
@@ -149,6 +158,16 @@ namespace Storage
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
             Grpc.Net.Client.GrpcChannel channel;
+
+            foreach (string key in request.Workers.Keys)
+            {
+                workersIdToURL.Add(key, request.Workers.GetValueOrDefault(key));
+
+                Console.WriteLine("Worker: " + key + " URL: " + workersIdToURL.GetValueOrDefault(key));
+
+                channel = Grpc.Net.Client.GrpcChannel.ForAddress(workersIdToURL.GetValueOrDefault(key));
+                workerClients[key] = new WorkerService.WorkerServiceClient(channel);
+            }
 
             foreach (int key in request.Storages.Keys)
             {
@@ -231,10 +250,20 @@ namespace Storage
 
         }
 
-        public StatusReply Status()
+        public StatusReply Status(StatusRequest request)
         {
-            //TODO display necessary info
-            Console.WriteLine("Status: I'm alive");
+            Console.WriteLine("\r\nSTORAGE STATUS\r\n");
+
+            foreach (KeyValuePair<int, string> pair in storagesIdToURL)
+                Console.WriteLine("Active Storage - Id: " + pair.Key + " URL: " + pair.Value);
+
+            Console.WriteLine("");
+
+            foreach (KeyValuePair<int, string> pair in crashedStoragesIdToURL)
+                Console.WriteLine("Crashed Storage - Id: " + pair.Key + " URL: " + pair.Value);
+
+            Console.WriteLine("\r\nEND OF STATUS\r\n");
+
             return new StatusReply();
         }
 

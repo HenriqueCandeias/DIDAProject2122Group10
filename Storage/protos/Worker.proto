@@ -1,0 +1,15 @@
+﻿syntax = "proto3";
+
+package worker;
+
+service WorkerService {
+	rpc CrashReport (CrashRepRequests) returns (CrashRepReply);
+}
+
+message CrashRepRequests {
+	int32 id = 1;
+}
+
+message CrashRepReply {
+	
+}

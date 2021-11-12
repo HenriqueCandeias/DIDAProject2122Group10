@@ -26,6 +26,10 @@ namespace Worker
 
         private Dictionary<int, string> storagesIdToURL = new Dictionary<int, string>();
 
+        private Dictionary<int, string> crashedStoragesIdToURL = new Dictionary<int, string>();
+
+        private Dictionary<string, WorkerService.WorkerServiceClient> workersIdToClient = new Dictionary<string, WorkerService.WorkerServiceClient>();
+
         public WorkerDomain(int worker_delay, string puppet_master_URL, bool debug)
         {
             workerDelay = worker_delay;
@@ -38,9 +42,21 @@ namespace Worker
             foreach (int key in request.Storages.Keys)
             {
                 storagesIdToURL.Add(key, request.Storages.GetValueOrDefault(key));
-                if(debug)
+                if (debug)
                 {
-                Console.WriteLine("Storage: " + key + " URL: " + storagesIdToURL.GetValueOrDefault(key));
+                    Console.WriteLine("Storage: " + key + " URL: " + storagesIdToURL.GetValueOrDefault(key));
+                }
+            }
+
+            GrpcChannel newWorkerChannel;
+
+            foreach (string key in request.Workers.Keys)
+            {
+                newWorkerChannel = GrpcChannel.ForAddress(request.Workers[key]);
+                workersIdToClient.Add(key, new WorkerService.WorkerServiceClient(newWorkerChannel));
+                if (debug)
+                {
+                    Console.WriteLine("Worker: " + key + " URL: " + request.Workers[key]);
                 }
             }
 
@@ -112,6 +128,29 @@ namespace Worker
 
             string output = myOperator.ProcessRecord(metaRecordConsistent, request.DidaRequest.Input, previousOutput);
 
+            //Check if the StorageProxy detected that an operator failed. If so, warn all other workers
+
+            if(metaRecordConsistent.failedReplicasIds.Count > 0)
+            {
+                CrashRepRequests crashReportRequest;
+
+                foreach (int replicaId in metaRecordConsistent.failedReplicasIds)
+                {
+                    crashedStoragesIdToURL.Add(replicaId, storagesIdToURL[replicaId]);
+                    storagesIdToURL.Remove(replicaId);
+
+                    crashReportRequest = new CrashRepRequests
+                    {
+                        Id = replicaId,
+                    };
+
+                    foreach (WorkerService.WorkerServiceClient client in workersIdToClient.Values)
+                        client.CrashReport(crashReportRequest);
+                }
+            }
+
+            //If the app is inconsistent, it should terminate
+            
             if (metaRecordConsistent.appIsInconsistent)
                 return new StartAppReply();
 
@@ -202,8 +241,18 @@ namespace Worker
 
         public StatusReply Status()
         {
-            //TODO display necessary info
-            Console.WriteLine("Status: I'm alive");
+            Console.WriteLine("\r\nWORKER STATUS\r\n");
+
+            foreach (KeyValuePair<int, string> pair in storagesIdToURL)
+                Console.WriteLine("Active Storage - Id: " + pair.Key + " URL: " + pair.Value);
+
+            Console.WriteLine("");
+
+            foreach (KeyValuePair<int, string> pair in crashedStoragesIdToURL)
+                Console.WriteLine("Crashed Storage - Id: " + pair.Key + " URL: " + pair.Value);
+
+            Console.WriteLine("\r\nEND OF STATUS\r\n");
+
             return new StatusReply();
         }
 

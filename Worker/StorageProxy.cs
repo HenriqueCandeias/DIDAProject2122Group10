@@ -92,7 +92,10 @@ namespace Worker
                 {
                     if(debug)
                         Console.WriteLine("Replica with id " + replicaId + " crashed while performing read operation.");
+
                     replicaIdToClient.Remove(replicaId);
+                    metaRecord.failedReplicasIds.Add(replicaId);
+
                     continue;
                 }
                 
@@ -192,7 +195,10 @@ namespace Worker
                 {
                     if(debug)
                         Console.WriteLine("Replica with id " + currentReplicaId + " crashed while performing write operation.");
+
                     replicaIdToClient.Remove(currentReplicaId);
+                    metaRecord.failedReplicasIds.Add(currentReplicaId);
+
                     continue;
                 }
 
@@ -255,7 +261,10 @@ namespace Worker
                 {
                     if(debug)
                         Console.WriteLine("Replica with id " + currentReplicaId + " crashed while performing updateIf operation.");
-                        replicaIdToClient.Remove(currentReplicaId);
+
+                    replicaIdToClient.Remove(currentReplicaId);
+                    metaRecord.failedReplicasIds.Add(currentReplicaId);
+
                     continue;
                 }
 

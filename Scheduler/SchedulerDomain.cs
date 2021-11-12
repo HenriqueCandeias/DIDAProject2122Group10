@@ -62,7 +62,7 @@ namespace Scheduler
                 workersURLToClient.Add(pair.Value, workerClient);
             }
 
-            //Inform the worker nodes about all storage nodes and the replicationFactor
+            //Inform the worker nodes about all nodes and the replicationFactor
 
             Worker.SendNodesURLRequest sendNodesToWorkersRequest = new Worker.SendNodesURLRequest();
             sendNodesToWorkersRequest.ReplicationFactor = replicationFactor;
@@ -72,12 +72,17 @@ namespace Scheduler
                 sendNodesToWorkersRequest.Storages.Add(pair.Key, pair.Value);
             }
 
-            foreach(KeyValuePair<string, WorkerService.WorkerServiceClient> pair in workersIdToClient)
+            foreach (KeyValuePair<string, string> pair in workersIdToURL)
+            {
+                sendNodesToWorkersRequest.Workers.Add(pair.Key, pair.Value);
+            }
+
+            foreach (KeyValuePair<string, WorkerService.WorkerServiceClient> pair in workersIdToClient)
             {
                 pair.Value.SendNodesURL(sendNodesToWorkersRequest);
             }
 
-            //Inform the storage nodes about all storage nodes and the replicationFactor
+            //Inform the storage nodes about all nodes and the replicationFactor
 
             Storage.SendNodesURLRequest sendNodesToStoragesRequest = new Storage.SendNodesURLRequest();
             sendNodesToStoragesRequest.ReplicationFactor = replicationFactor;
@@ -85,6 +90,11 @@ namespace Scheduler
             foreach (KeyValuePair<int, string> pair in storagesIdToURL)
             {
                 sendNodesToStoragesRequest.Storages.Add(pair.Key, pair.Value);
+            }
+
+            foreach (KeyValuePair<string, string> pair in workersIdToURL)
+            {
+                sendNodesToStoragesRequest.Workers.Add(pair.Key, pair.Value);
             }
 
             StorageService.StorageServiceClient storageClient;
@@ -99,7 +109,6 @@ namespace Scheduler
                 sendNodesToStoragesRequest.ReplicaId = pair.Key;
                 storageClient.SendNodesURL(sendNodesToStoragesRequest);
             }
-
 
             return new SendNodesURLReply();
         }
@@ -168,13 +177,6 @@ namespace Scheduler
             }
 
             return chain;
-        }
-
-        public StatusReply Status()
-        {
-            //TODO display necessary info
-            Console.WriteLine("Status: I'm alive");
-            return new StatusReply();
         }
     }
 }

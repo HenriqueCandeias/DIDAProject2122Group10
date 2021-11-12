@@ -70,7 +70,7 @@ namespace Storage
         {
             try
             {
-                return Task.FromResult<StatusReply>(domain.Status());
+                return Task.FromResult<StatusReply>(domain.Status(request));
             }
             catch (Exception e)
             {

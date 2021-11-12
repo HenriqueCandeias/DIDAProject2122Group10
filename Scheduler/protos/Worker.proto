@@ -9,7 +9,9 @@ service WorkerService {
 
 message SendNodesURLRequest {
 	map<int32, string> storages = 1;
-	float replicationFactor = 2;
+	map<string, string> workers = 2;
+	float replicationFactor = 3;
+	string schedulerURL = 4;
 }
 
 message SendNodesURLReply {

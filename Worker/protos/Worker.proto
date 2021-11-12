@@ -7,11 +7,14 @@ service WorkerService {
 	rpc StartApp(StartAppRequest) returns (StartAppReply);
 	rpc Status(StatusRequest) returns (StatusReply);
 	rpc Crash(CrashRequest) returns (CrashReply);
+	rpc CrashReport (CrashRepRequests) returns (CrashRepReply);
 }
 
 message SendNodesURLRequest {
 	map<int32, string> storages = 1;
-	float replicationFactor = 2;
+	map<string, string> workers = 2;
+	float replicationFactor = 3;
+	string schedulerURL = 4;
 }
 
 message SendNodesURLReply {
@@ -72,4 +75,12 @@ message CrashRequest {
 
 message CrashReply{
 
+}
+
+message CrashRepRequests {
+	int32 id = 1;
+}
+
+message CrashRepReply {
+	
 }

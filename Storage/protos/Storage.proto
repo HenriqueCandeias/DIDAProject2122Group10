@@ -84,8 +84,9 @@ message CrashReply{
 
 message SendNodesURLRequest {
 	map<int32, string> storages = 1;
-	int32 replicaId = 2;
-	float replicationFactor = 3;
+	map<string, string> workers = 2;
+	int32 replicaId = 3;
+	float replicationFactor = 4;
 }
 
 message SendNodesURLReply {
