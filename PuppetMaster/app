@@ -1,1 +1,4 @@
 ﻿operator DummyOperator 0
+operator DummyOperator 1
+operator DummyOperator 2
+operator DummyOperator 3

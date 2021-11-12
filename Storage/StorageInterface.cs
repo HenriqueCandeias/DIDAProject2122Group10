@@ -24,6 +24,7 @@ namespace Storage
 
         private SortedDictionary<int, StorageService.StorageServiceClient> storageClients = new SortedDictionary<int, StorageService.StorageServiceClient>();
 
+        private List<int> replicasIds = new List<int>();
 
         private static readonly ReadStorageReply nullReadStorageReply = new ReadStorageReply
         {
@@ -49,13 +50,15 @@ namespace Storage
 
             List<LogStruct> allLogs = new List<LogStruct>();
 
-            int currentReplica = replicaId;
+            int currentReplicaIndex = replicasIds.FindIndex(a => a == replicaId);
+
+            int currentReplica = replicasIds[currentReplicaIndex];
 
             for (int i = 0; i < numReplicas; i++)
             {
                 //mandr log apenas do que e seu
-                currentReplica = currentReplica == 0 ? storageClients.Count() - 1 : --currentReplica;
-
+                currentReplicaIndex = currentReplicaIndex == 0 ? storageClients.Count() - 1 : --currentReplicaIndex;
+                currentReplica = replicasIds[currentReplicaIndex];
                 try
                 {
                     reply = storageClients.GetValueOrDefault(currentReplica).RequestLog(new GossipRequest
@@ -78,6 +81,7 @@ namespace Storage
 
                     storagesIdToURL.Remove(currentReplica);
                     storageClients.Remove(currentReplica);
+                    replicasIds.Remove(currentReplica);
 
                     storageClients.AsParallel().ForAll(entry => entry.Value.CrashReport(new CrashRepRequests
                     {
@@ -154,6 +158,7 @@ namespace Storage
 
                 channel = Grpc.Net.Client.GrpcChannel.ForAddress(storagesIdToURL.GetValueOrDefault(key));
                 storageClients[key] = new StorageService.StorageServiceClient(channel);
+                replicasIds.Add(key);
 
             }
 
