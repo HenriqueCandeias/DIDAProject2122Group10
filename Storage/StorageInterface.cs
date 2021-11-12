@@ -85,10 +85,14 @@ namespace Storage
                 {
                     Console.WriteLine("grpc connection to " + currentReplica + " has expired");
 
-                    crashedStoragesIdToURL.Add(currentReplica, storagesIdToURL[currentReplica]);
-                    storagesIdToURL.Remove(currentReplica);
-                    storageClients.Remove(currentReplica);
-                    replicasIds.Remove(currentReplica);
+                    if(crashedStoragesIdToURL.ContainsKey(currentReplica))
+                    {
+                        crashedStoragesIdToURL.Add(currentReplica, storagesIdToURL[currentReplica]);
+                        storagesIdToURL.Remove(currentReplica);
+                        storageClients.Remove(currentReplica);
+                        replicasIds.Remove(currentReplica);
+                    }
+
 
                     storageClients.AsParallel().ForAll(entry => entry.Value.CrashReport(new Storage.CrashRepRequests
                     {
@@ -128,7 +132,8 @@ namespace Storage
                 crashedStoragesIdToURL.Add(request.Id, storagesIdToURL[request.Id]);
                 storagesIdToURL.Remove(request.Id);
                 storageClients.Remove(request.Id);
-                
+                replicasIds.Remove(request.Id);
+
                 Console.WriteLine("removed :" + request.Id);
             }
             return new CrashRepReply();
@@ -188,6 +193,7 @@ namespace Storage
 
             clocks = new List<int>(new int[storageClients.Count()]);
 
+            Console.WriteLine("I'm replicaId " + replicaId.ToString());
             return new SendNodesURLReply();
         }
 
