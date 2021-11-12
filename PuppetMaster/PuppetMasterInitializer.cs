@@ -25,23 +25,23 @@ namespace PuppetMaster
 
         //Id to URL
 
-        private Dictionary<string, string> schedulerIdToURL = new Dictionary<string, string>();
+        private ConcurrentDictionary<string, string> schedulerIdToURL = new ConcurrentDictionary<string, string>();
 
-        private Dictionary<string, string> workersIdToURL = new Dictionary<string, string>();
+        private ConcurrentDictionary<string, string> workersIdToURL = new ConcurrentDictionary<string, string>();
 
-        private Dictionary<string, string> storagesIdToURL = new Dictionary<string, string>();
+        private ConcurrentDictionary<string, string> storagesIdToURL = new ConcurrentDictionary<string, string>();
 
         //Crashed nodes: Id to URL
 
-        private Dictionary<string, string> crashedStoragesIdToURL = new Dictionary<string, string>();
+        private ConcurrentDictionary<string, string> crashedStoragesIdToURL = new ConcurrentDictionary<string, string>();
 
         //Id to gRPC client
 
         private SchedulerService.SchedulerServiceClient schedulerClient;
 
-        private Dictionary<string, WorkerService.WorkerServiceClient> workersIdToClient = new Dictionary<string, WorkerService.WorkerServiceClient>();
+        private ConcurrentDictionary<string, WorkerService.WorkerServiceClient> workersIdToClient = new ConcurrentDictionary<string, WorkerService.WorkerServiceClient>();
 
-        private Dictionary<string, StorageService.StorageServiceClient> storagesIdToClient = new Dictionary<string, StorageService.StorageServiceClient>();
+        private ConcurrentDictionary<string, StorageService.StorageServiceClient> storagesIdToClient = new ConcurrentDictionary<string, StorageService.StorageServiceClient>();
 
         //Other
 
@@ -140,10 +140,6 @@ namespace PuppetMaster
                     ServerFinder(words[1], Action.Crash);
                     break;
 
-                case "crashAll":
-                    ServerGlobal(Action.Crash);
-                    break;
-
                 case "wait":
                     Thread.Sleep(Int32.Parse(words[1]));
                     break;
@@ -153,7 +149,7 @@ namespace PuppetMaster
         public void StartScheduler(string server_id, string URL)
         {
             schedulerIdToURL.Clear();
-            schedulerIdToURL.Add(server_id, URL);
+            schedulerIdToURL.TryAdd(server_id, URL);
 
             StartSchedulerRequest request = new StartSchedulerRequest()
             {
@@ -164,7 +160,7 @@ namespace PuppetMaster
             GrpcChannel pcsChannel = GrpcChannel.ForAddress(URL.Split(':')[0] + ":" + URL.Split(':')[1] + ":" + pcsServerPort.ToString());
             PCSService.PCSServiceClient pcsClient = new PCSService.PCSServiceClient(pcsChannel);
 
-            pcsClient.StartScheduler(request);
+            pcsClient.StartSchedulerAsync(request);
 
             GrpcChannel schedulerChannel = GrpcChannel.ForAddress(URL);
             schedulerClient = new SchedulerService.SchedulerServiceClient(schedulerChannel);
@@ -172,7 +168,7 @@ namespace PuppetMaster
 
         public void StartWorker(string server_id, string URL, string worker_delay)
         {
-            workersIdToURL.Add(server_id, URL);
+            workersIdToURL.TryAdd(server_id, URL);
 
             StartWorkerRequest request = new StartWorkerRequest()
             {
@@ -186,15 +182,15 @@ namespace PuppetMaster
             GrpcChannel pcsChannel = GrpcChannel.ForAddress(URL.Split(':')[0] + ":" + URL.Split(':')[1] + ":" + pcsServerPort.ToString());
             PCSService.PCSServiceClient pcsClient = new PCSService.PCSServiceClient(pcsChannel);
 
-            pcsClient.StartWorker(request);
+            pcsClient.StartWorkerAsync(request);
 
             GrpcChannel workerChannel = GrpcChannel.ForAddress(URL);
-            workersIdToClient.Add(server_id, new WorkerService.WorkerServiceClient(workerChannel));
+            workersIdToClient.TryAdd(server_id, new WorkerService.WorkerServiceClient(workerChannel));
         }
 
         public void StartStorage(string server_id, string URL, string gossip_delay)
         {
-            storagesIdToURL.Add(server_id, URL);
+            storagesIdToURL.TryAdd(server_id, URL);
 
             StartStorageRequest request = new StartStorageRequest()
             {
@@ -205,10 +201,10 @@ namespace PuppetMaster
             GrpcChannel pcsChannel = GrpcChannel.ForAddress(URL.Split(':')[0] + ":" + URL.Split(':')[1] + ":" + pcsServerPort.ToString());
             PCSService.PCSServiceClient pcsClient = new PCSService.PCSServiceClient(pcsChannel);
 
-            pcsClient.StartStorage(request);
+            pcsClient.StartStorageAsync(request);
 
             GrpcChannel storageChannel = GrpcChannel.ForAddress(URL);
-            storagesIdToClient.Add(server_id, new StorageService.StorageServiceClient(storageChannel));
+            storagesIdToClient.TryAdd(server_id, new StorageService.StorageServiceClient(storageChannel));
         }
 
         private void StartApp(string input, string app_file)
@@ -234,10 +230,11 @@ namespace PuppetMaster
 
             request.Operators.Add(operators);
 
-            StartAppReply reply = schedulerClient.StartApp(request);
-
             if (debugActive)
-                GUI.PrintDebugMessage(reply.DebugMessage);
+                GUI.PrintDebugMessage(schedulerClient.StartApp(request).DebugMessage);
+
+            else
+                schedulerClient.StartAppAsync(request);
         }
 
         public void Status()
@@ -245,12 +242,12 @@ namespace PuppetMaster
             Worker.StatusRequest workerStatusRequest = new Worker.StatusRequest();
 
             foreach (WorkerService.WorkerServiceClient worker in workersIdToClient.Values)
-                worker.Status(workerStatusRequest);
+                worker.StatusAsync(workerStatusRequest);
 
             Storage.StatusRequest storageStatusRequest = new Storage.StatusRequest();
 
             foreach (StorageService.StorageServiceClient storage in storagesIdToClient.Values)
-                storage.Status(storageStatusRequest);
+                storage.StatusAsync(storageStatusRequest);
 
             PrintPuppetMasterStatus();
         }
@@ -316,16 +313,19 @@ namespace PuppetMaster
         public void ListStorage(string server_id)
         {
             Storage.ListRequest listRequest = new Storage.ListRequest();
-            storagesIdToClient[server_id].List(listRequest);
+            storagesIdToClient[server_id].ListAsync(listRequest);
         }
 
         public void CrashStorage(string server_id)
         {
             Storage.CrashRequest crashRequest = new Storage.CrashRequest();
-            storagesIdToClient[server_id].Crash(crashRequest);
-            crashedStoragesIdToURL.Add(server_id, storagesIdToURL[server_id]);
-            storagesIdToURL.Remove(server_id);
-            storagesIdToClient.Remove(server_id);
+            storagesIdToClient[server_id].CrashAsync(crashRequest);
+            crashedStoragesIdToURL.TryAdd(server_id, storagesIdToURL[server_id]);
+
+            string removeString;
+            StorageService.StorageServiceClient removeClient;
+            storagesIdToURL.TryRemove(server_id, out removeString);
+            storagesIdToClient.TryRemove(server_id, out removeClient);
         }
 
         public void Populate(string data_file)
@@ -341,7 +341,7 @@ namespace PuppetMaster
                 };
                 foreach(StorageService.StorageServiceClient client in storagesIdToClient.Values)
                 {
-                    client.Populate(populateRequest);
+                    client.PopulateAsync(populateRequest);
                 }
             }
 

@@ -12,6 +12,7 @@ using Worker;
 using DIDAOperator;
 using System.Threading;
 using Storage;
+using System.Collections.Concurrent;
 
 namespace Worker
 {
@@ -25,13 +26,13 @@ namespace Worker
 
         private string puppetMasterURL;
 
-        private Dictionary<int, string> storagesIdToURL = new Dictionary<int, string>();
+        private ConcurrentDictionary<int, string> storagesIdToURL = new ConcurrentDictionary<int, string>();
 
-        private Dictionary<int, string> crashedStoragesIdToURL = new Dictionary<int, string>();
+        private ConcurrentDictionary<int, string> crashedStoragesIdToURL = new ConcurrentDictionary<int, string>();
 
-        private Dictionary<string, WorkerService.WorkerServiceClient> workersIdToClient = new Dictionary<string, WorkerService.WorkerServiceClient>();
+        private ConcurrentDictionary<string, WorkerService.WorkerServiceClient> workersIdToClient = new ConcurrentDictionary<string, WorkerService.WorkerServiceClient>();
 
-        private Dictionary<int, StorageService.StorageServiceClient> storagesIdToClient = new Dictionary<int, StorageService.StorageServiceClient>();
+        private ConcurrentDictionary<int, StorageService.StorageServiceClient> storagesIdToClient = new ConcurrentDictionary<int, StorageService.StorageServiceClient>();
 
         public WorkerDomain(int worker_delay, string puppet_master_URL, bool debug)
         {
@@ -47,9 +48,9 @@ namespace Worker
             foreach (int key in request.Storages.Keys)
             {
                 channel = GrpcChannel.ForAddress(request.Storages[key]);
-                storagesIdToClient.Add(key, new StorageService.StorageServiceClient(channel));
+                storagesIdToClient.TryAdd(key, new StorageService.StorageServiceClient(channel));
 
-                storagesIdToURL.Add(key, request.Storages.GetValueOrDefault(key));
+                storagesIdToURL.TryAdd(key, request.Storages.GetValueOrDefault(key));
                 if (debug)
                 {
                     Console.WriteLine("Storage: " + key + " URL: " + storagesIdToURL.GetValueOrDefault(key));
@@ -59,7 +60,7 @@ namespace Worker
             foreach (string key in request.Workers.Keys)
             {
                 channel = GrpcChannel.ForAddress(request.Workers[key]);
-                workersIdToClient.Add(key, new WorkerService.WorkerServiceClient(channel));
+                workersIdToClient.TryAdd(key, new WorkerService.WorkerServiceClient(channel));
                 if (debug)
                 {
                     Console.WriteLine("Worker: " + key + " URL: " + request.Workers[key]);
@@ -141,14 +142,15 @@ namespace Worker
                 Worker.CrashRepRequests workerCrashReportRequest;
                 Storage.CrashRepRequests storageCrashReportRequest;
 
+                string removeOutput;
                 foreach (int replicaId in metaRecordConsistent.failedReplicasIds)
                 {
                     Console.WriteLine("replicaId that failed: " + replicaId);
 
                     if (storagesIdToURL.ContainsKey(replicaId))
                     {
-                        crashedStoragesIdToURL.Add(replicaId, storagesIdToURL[replicaId]);
-                        storagesIdToURL.Remove(replicaId);
+                        crashedStoragesIdToURL.TryAdd(replicaId, storagesIdToURL[replicaId]);
+                        storagesIdToURL.TryRemove(replicaId, out removeOutput);
                     }
 
                     workerCrashReportRequest = new Worker.CrashRepRequests
@@ -221,7 +223,7 @@ namespace Worker
                 }
                 Thread.Sleep(workerDelay);
 
-                StartAppReply reply = nextWorkerClient.StartApp(request);  //nextWorkerClient.StartAppAsync(request);
+                StartAppReply reply = nextWorkerClient.StartApp(request);
                 
                 if(debug)
                 {
@@ -272,7 +274,6 @@ namespace Worker
                         {
                             if (type.Name == className)
                             {
-                                Console.WriteLine("Found type to load dynamically: " + className);
                                 _objLoadedByReflection = (IDIDAOperator)Activator.CreateInstance(type);
 
                                 return _objLoadedByReflection;
@@ -315,14 +316,15 @@ namespace Worker
 
         public CrashRepReply CrashReport(CrashRepRequests request)
         {
-            Console.WriteLine("Received a Crashreport");
-            if(storagesIdToURL.ContainsKey(request.Id))
+            if (storagesIdToURL.ContainsKey(request.Id))
             {
-                crashedStoragesIdToURL.Add(request.Id, storagesIdToURL[request.Id]);
-                storagesIdToURL.Remove(request.Id);
-                storagesIdToClient.Remove(request.Id);
+                string stringRemoveOutput;
+                StorageService.StorageServiceClient clientRemoveOutput;
+                crashedStoragesIdToURL.TryAdd(request.Id, storagesIdToURL[request.Id]);
+                storagesIdToURL.TryRemove(request.Id, out stringRemoveOutput);
+                storagesIdToClient.TryRemove(request.Id, out clientRemoveOutput);
             }
-            
+
             return new CrashRepReply();
         }
     }

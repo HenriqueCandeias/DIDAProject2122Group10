@@ -1,5 +1,6 @@
 ﻿using DIDAStorage;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 
@@ -11,9 +12,11 @@ namespace Storage
 
         private const int maxVersions = 3;
 
-        public Dictionary<string, List<DIDARecord>> recordIdToRecords = new Dictionary<string, List<DIDARecord>>();
+        public ConcurrentDictionary<string, List<DIDARecord>> recordIdToRecords = new ConcurrentDictionary<string, List<DIDARecord>>();
 
         private List<LogStruct> log = new List<LogStruct>();
+
+        private readonly object logLock = new object();
 
         public static readonly DIDARecord nullDIDARecord = new DIDARecord
         {
@@ -101,17 +104,20 @@ namespace Storage
 
                     if (needLog)
                     {
-                        log.Add(new LogStruct
+                        lock(logLock)
                         {
-                            Id = id,
-                            OldVal = oldValue,
-                            NewVal = newValue,
-                            DidaVersion = new DidaVersion
+                            log.Add(new LogStruct
                             {
-                                VersionNumber = newVersion.versionNumber,
-                                ReplicaId = newVersion.replicaId,
-                            },
-                        });
+                                Id = id,
+                                OldVal = oldValue,
+                                NewVal = newValue,
+                                DidaVersion = new DidaVersion
+                                {
+                                    VersionNumber = newVersion.versionNumber,
+                                    ReplicaId = newVersion.replicaId,
+                                },
+                            });
+                        }
                     }
 
                     return newVersion;
@@ -126,7 +132,7 @@ namespace Storage
             DIDARecord mostRecentRecord = GetMostRecentRecord(id);
 
             if (mostRecentRecord.Equals(nullDIDARecord))
-                recordIdToRecords.Add(id, new List<DIDARecord>());
+                recordIdToRecords.TryAdd(id, new List<DIDARecord>());
 
             DIDAVersion newVersion = new DIDAVersion
             {
@@ -162,16 +168,19 @@ namespace Storage
 
             if (needLog)
             {
-                log.Add(new LogStruct
+                lock(logLock)
                 {
-                    Id = id,
-                    NewVal = val,
-                    DidaVersion = new DidaVersion
+                    log.Add(new LogStruct
                     {
-                        VersionNumber = newVersion.versionNumber,
-                        ReplicaId = newVersion.replicaId,
-                    },
-                });
+                        Id = id,
+                        NewVal = val,
+                        DidaVersion = new DidaVersion
+                        {
+                            VersionNumber = newVersion.versionNumber,
+                            ReplicaId = newVersion.replicaId,
+                        },
+                    });
+                }
             }
 
             return newVersion;
@@ -201,14 +210,16 @@ namespace Storage
         public List<LogStruct> GetLog(int clock)
         {
             List<LogStruct> lastLog = new List<LogStruct>();
-            //log = new List<LogStruct>();
 
-            for(int i = clock; i < log.Count; i++)
+            lock (logLock)
             {
-                Console.WriteLine(i);
-                lastLog.Add(log[i]);
+                for (int i = clock; i < log.Count; i++)
+                {
+                    Console.WriteLine(i);
+                    lastLog.Add(log[i]);
+                }
             }
-
+            
             return lastLog;
         }
     }

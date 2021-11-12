@@ -135,7 +135,7 @@ namespace Scheduler
 
             string firstWorkerURL = startAppRequest.DidaRequest.Chain[0].Host + ":" + startAppRequest.DidaRequest.Chain[0].Port.ToString();
 
-            Worker.StartAppReply reply = workersURLToClient.GetValueOrDefault(firstWorkerURL).StartApp(startAppRequest); //workersURLToClient.GetValueOrDefault(firstWorkerURL).StartAppAsync(startAppRequest);
+            Worker.StartAppReply reply = workersURLToClient.GetValueOrDefault(firstWorkerURL).StartApp(startAppRequest);
 
             Console.WriteLine("Sent DIDARequest to worker.");
 
