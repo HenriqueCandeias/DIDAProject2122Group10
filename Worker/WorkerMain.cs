@@ -20,19 +20,26 @@ namespace Worker
         static void Main(string[] args)
         {
             try {
+                bool debug = false;
                 int port = Int32.Parse(args[1].Split(':')[2]);
 
                 int worker_delay = Int32.Parse(args[2]);
 
                 string puppet_master_URL = "";
                 if (args.Length == 4)
+                {
                     puppet_master_URL = args[3];
+                    debug = true;
+                }                
 
-                Console.WriteLine("Starting Server on Port: " + port);
-
+                if(debug)
+                {
+                    Console.WriteLine("Debugging");
+                    Console.WriteLine("Starting Server on Port: " + port);
+                }
                 Server server = new Server
                 {
-                    Services = { WorkerService.BindService(new WorkerServer(worker_delay, puppet_master_URL)) },
+                    Services = { WorkerService.BindService(new WorkerServer(worker_delay, puppet_master_URL, debug)) },
                     Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) },
                 };
 

@@ -148,7 +148,7 @@ namespace PuppetMaster
             Server server = new Server
             {
                 Services = { PuppetMasterService.BindService(new PuppetMasterServer()) },
-                Ports = { new ServerPort(puppetMasterHost, puppetMasterPort, ServerCredentials.Insecure) }
+                Ports = { new ServerPort("localhost", puppetMasterPort, ServerCredentials.Insecure) }
             };
             server.Start();
 

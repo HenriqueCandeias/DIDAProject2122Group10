@@ -20,14 +20,17 @@ namespace Worker
 
         private float replicationFactor;
 
+        private bool debug;
+
         private string puppetMasterURL;
 
         private Dictionary<int, string> storagesIdToURL = new Dictionary<int, string>();
 
-        public WorkerDomain(int worker_delay, string puppet_master_URL)
+        public WorkerDomain(int worker_delay, string puppet_master_URL, bool debug)
         {
             workerDelay = worker_delay;
             puppetMasterURL = puppet_master_URL;
+            this.debug = debug;
         }
 
         public SendNodesURLReply SendNodesURL(SendNodesURLRequest request)
@@ -35,7 +38,10 @@ namespace Worker
             foreach (int key in request.Storages.Keys)
             {
                 storagesIdToURL.Add(key, request.Storages.GetValueOrDefault(key));
+                if(debug)
+                {
                 Console.WriteLine("Storage: " + key + " URL: " + storagesIdToURL.GetValueOrDefault(key));
+                }
             }
 
             replicationFactor = request.ReplicationFactor;
@@ -45,8 +51,11 @@ namespace Worker
 
         public StartAppReply StartApp(StartAppRequest request)
         {
+            if(debug)
+            {
             Console.WriteLine("Received a DIDARequest:");
             Console.WriteLine(request.DidaRequest.ToString());
+            }
 
             //Load the operator mentioned in the request by reflection
 
@@ -58,7 +67,10 @@ namespace Worker
 
             if (myOperator == null)
             {
-                Console.WriteLine("Failed to load operator by reflection: " + didaOperatorID.Classname);
+                if(debug)
+                {
+                    Console.WriteLine("Failed to load operator by reflection: " + didaOperatorID.Classname);
+                }
                 return new StartAppReply();
             }
 
@@ -92,7 +104,7 @@ namespace Worker
 
             //Configure and run the operator
 
-            myOperator.ConfigureStorage(new StorageProxy(storagesURL.ToArray(), metaRecordConsistent));
+            myOperator.ConfigureStorage(new StorageProxy(storagesURL.ToArray(), metaRecordConsistent, debug));
 
             string previousOutput = "";
             if (request.DidaRequest.Next - 1 >= 0)
@@ -136,14 +148,20 @@ namespace Worker
                     request.DidaRequest.Chain[request.DidaRequest.Next].Host + ":" + request.DidaRequest.Chain[request.DidaRequest.Next].Port);
                 WorkerService.WorkerServiceClient nextWorkerClient = new WorkerService.WorkerServiceClient(nextWorkerChannel);
 
-                Console.WriteLine("Going to send to the worker "
-                    + request.DidaRequest.Chain[request.DidaRequest.Next].Host + ":" + request.DidaRequest.Chain[request.DidaRequest.Next].Port + " the following request: ");
-                Console.WriteLine(request);
-
+                if(debug)
+                {
+                    Console.WriteLine("Going to send to the worker "
+                        + request.DidaRequest.Chain[request.DidaRequest.Next].Host + ":" + request.DidaRequest.Chain[request.DidaRequest.Next].Port + " the following request: ");
+                    Console.WriteLine(request);
+                }
                 Thread.Sleep(workerDelay);
 
                 nextWorkerClient.StartApp(request);  //nextWorkerClient.StartAppAsync(request);
-                Console.WriteLine("Request sent.");
+
+                if(debug)
+                {
+                    Console.WriteLine("Request sent.");
+                }
             }
 
             return new StartAppReply();
@@ -191,6 +209,8 @@ namespace Worker
 
         public CrashReply Crash()
         {
+            if(debug)
+                Console.WriteLine("Crashing...");
             Task.Delay(1000).ContinueWith(t => System.Environment.Exit(1));
             return new CrashReply();
         }

@@ -1,4 +1,13 @@
 ﻿syntax = "proto3";
 
 service PuppetMasterService {
+	rpc Print(PrintRequest) returns (PrintReply);
+}
+
+message PrintRequest {
+
+}
+
+message PrintReply {
+
 }

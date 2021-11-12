@@ -10,6 +10,8 @@ namespace Worker
 {
     public class StorageProxy : IDIDAStorage
     {
+        bool debug;
+
         DIDAMetaRecordConsistent metaRecord;
 
         SortedDictionary<int, StorageService.StorageServiceClient> replicaIdToClient = new SortedDictionary<int, StorageService.StorageServiceClient>();
@@ -31,7 +33,7 @@ namespace Worker
             ReplicaId = -1,
         };
 
-        public StorageProxy(DIDAStorageNode[] storageNodes, DIDAMetaRecordConsistent metaRecord)
+        public StorageProxy(DIDAStorageNode[] storageNodes, DIDAMetaRecordConsistent metaRecord, bool debug)
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
@@ -42,6 +44,7 @@ namespace Worker
             }
 
             this.metaRecord = metaRecord;
+            this.debug = debug;
         }
 
         public virtual DIDAWorker.DIDARecordReply read(DIDAWorker.DIDAReadRequest r)
@@ -87,7 +90,8 @@ namespace Worker
                 }
                 catch (Grpc.Core.RpcException)
                 {
-                    Console.WriteLine("Replica with id " + replicaId + " crashed while performing read operation.");
+                    if(debug)
+                        Console.WriteLine("Replica with id " + replicaId + " crashed while performing read operation.");
                     replicaIdToClient.Remove(replicaId);
                     continue;
                 }
@@ -114,11 +118,11 @@ namespace Worker
                 VersionNumber = reply.DidaRecord.DidaVersion.VersionNumber,
                 ReplicaId = reply.DidaRecord.DidaVersion.ReplicaId,
             };
-
-            Console.WriteLine(
-                "Read - the record is: ID: " + reply.DidaRecord.Id + " Version Number: " + reply.DidaRecord.DidaVersion.VersionNumber +
-                " Replica ID: " + reply.DidaRecord.DidaVersion.ReplicaId + " Val: " + reply.DidaRecord.Val
-            );
+            if(debug)
+                Console.WriteLine(
+                    "Read - the record is: ID: " + reply.DidaRecord.Id + " Version Number: " + reply.DidaRecord.DidaVersion.VersionNumber +
+                    " Replica ID: " + reply.DidaRecord.DidaVersion.ReplicaId + " Val: " + reply.DidaRecord.Val
+                );
 
             return new DIDAWorker.DIDARecordReply
             {
@@ -184,7 +188,8 @@ namespace Worker
                 }
                 catch (Grpc.Core.RpcException)
                 {
-                    Console.WriteLine("Replica with id " + currentReplicaId + " crashed while performing write operation.");
+                    if(debug)
+                        Console.WriteLine("Replica with id " + currentReplicaId + " crashed while performing write operation.");
                     replicaIdToClient.Remove(currentReplicaId);
                     continue;
                 }
@@ -201,10 +206,11 @@ namespace Worker
                 ReplicaId = reply.DidaVersion.ReplicaId,
             };
 
-            Console.WriteLine(
-                "Write - new version is: Version Number: " + reply.DidaVersion.VersionNumber +
-                " Replica ID: " + reply.DidaVersion.ReplicaId
-            );
+            if(debug)
+                Console.WriteLine(
+                    "Write - new version is: Version Number: " + reply.DidaVersion.VersionNumber +
+                    " Replica ID: " + reply.DidaVersion.ReplicaId
+                );
 
             return new DIDAWorker.DIDAVersion
             {
@@ -245,8 +251,9 @@ namespace Worker
                 }
                 catch (Grpc.Core.RpcException)
                 {
-                    Console.WriteLine("Replica with id " + currentReplicaId + " crashed while performing updateIf operation.");
-                    replicaIdToClient.Remove(currentReplicaId);
+                    if(debug)
+                        Console.WriteLine("Replica with id " + currentReplicaId + " crashed while performing updateIf operation.");
+                        replicaIdToClient.Remove(currentReplicaId);
                     continue;
                 }
 
@@ -262,10 +269,11 @@ namespace Worker
                 ReplicaId = reply.DidaVersion.ReplicaId,
             };
 
-            Console.WriteLine(
-                "UpdateIf - new version is: Version Number: " + reply.DidaVersion.VersionNumber +
-                " Replica ID: " + reply.DidaVersion.ReplicaId
-            );
+            if(debug)
+                Console.WriteLine(
+                    "UpdateIf - new version is: Version Number: " + reply.DidaVersion.VersionNumber +
+                    " Replica ID: " + reply.DidaVersion.ReplicaId
+                );
 
             return new DIDAWorker.DIDAVersion
             {
