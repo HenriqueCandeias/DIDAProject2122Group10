@@ -51,8 +51,6 @@ namespace Worker
         {
             bool versionChangedAccordingToMetaRecord = false;
 
-            List<int> orderOfReplicaIdToRead = GetOrderOfReplicasToReadFrom(r.Id);
-
             if (r.Version.Equals(nullDIDAVersion))
             {
                 //Check if any of the operators of the app has already modified the record.
@@ -68,6 +66,8 @@ namespace Worker
                     }
                 }
             }
+
+            List<int> orderOfReplicaIdToRead = GetOrderOfReplicasToReadOrWrite(r.Id);
 
             ReadStorageReply reply = null;
 
@@ -98,6 +98,7 @@ namespace Worker
                 
                 if (reply.DidaRecord.DidaVersion.VersionNumber != -1 && reply.DidaRecord.DidaVersion.ReplicaId != -1)
                     break;
+
             }
 
             //Note: if a read operation is executed according to a record id that does not exist anywhere AND
@@ -136,7 +137,7 @@ namespace Worker
             };
         }
 
-        private List<int> GetOrderOfReplicasToReadFrom(string recordId)
+        private List<int> GetOrderOfReplicasToReadOrWrite(string recordId)
         {
             byte[] encodedRecordId = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(recordId));
             int hashedRecordId = BitConverter.ToInt32(encodedRecordId, 0) % replicaIdToClient.Count;
@@ -145,13 +146,14 @@ namespace Worker
 
             int currentReplicaId = (hashedRecordId + 1) % replicaIdToClient.Count;
 
-            int amountOfReplicasToReadFrom = (int)(replicaIdToClient.Count * metaRecord.replicationFactor);
+            int amountOfReplicasToReadFrom = replicaIdToClient.Count;
 
             for (int replicaCounter = 0; replicaCounter <= amountOfReplicasToReadFrom; replicaCounter++, currentReplicaId++)
             {
                 currentReplicaId %= replicaIdToClient.Count;
 
-                replicaIdOrdered.Add(currentReplicaId);
+                if(replicaIdToClient.ContainsKey(currentReplicaId))
+                    replicaIdOrdered.Add(currentReplicaId);
             }
 
             return replicaIdOrdered;
