@@ -49,15 +49,18 @@ namespace PuppetMaster
 
         private bool nodesAreInformed = false;
 
+        private PuppetMasterGUI GUI;
+
         public enum Action
         {
             List,
             Crash,
         }
 
-        public PuppetMasterInitializer()
+        public PuppetMasterInitializer(PuppetMasterGUI GUI)
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            this.GUI = GUI;
         }
 
         public void StartPCS()
@@ -89,7 +92,7 @@ namespace PuppetMaster
             switch (words[0])
             {
                 case "debug":
-                    StartDebugging();
+                    debugActive = true;
                     return;
 
                 case "scheduler":
@@ -145,18 +148,6 @@ namespace PuppetMaster
                     Thread.Sleep(Int32.Parse(words[1]));
                     break;
             }
-        }
-
-        private void StartDebugging()
-        {
-            Server server = new Server
-            {
-                Services = { PuppetMasterService.BindService(new PuppetMasterServer()) },
-                Ports = { new ServerPort("localhost", puppetMasterPort, ServerCredentials.Insecure) }
-            };
-            server.Start();
-
-            debugActive = true;
         }
 
         public void StartScheduler(string server_id, string URL)
@@ -243,7 +234,10 @@ namespace PuppetMaster
 
             request.Operators.Add(operators);
 
-            schedulerClient.StartApp(request);
+            StartAppReply reply = schedulerClient.StartApp(request);
+
+            if (debugActive)
+                GUI.PrintDebugMessage(reply.DebugMessage);
         }
 
         public void Status()

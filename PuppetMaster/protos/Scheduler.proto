@@ -22,5 +22,5 @@ message StartAppRequest {
 }
 
 message StartAppReply {
-	
+	string debugMessage = 1;
 }

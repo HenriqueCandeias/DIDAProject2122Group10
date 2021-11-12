@@ -135,13 +135,16 @@ namespace Scheduler
 
             string firstWorkerURL = startAppRequest.DidaRequest.Chain[0].Host + ":" + startAppRequest.DidaRequest.Chain[0].Port.ToString();
 
-            workersURLToClient.GetValueOrDefault(firstWorkerURL).StartApp(startAppRequest); //workersURLToClient.GetValueOrDefault(firstWorkerURL).StartAppAsync(startAppRequest);
+            Worker.StartAppReply reply = workersURLToClient.GetValueOrDefault(firstWorkerURL).StartApp(startAppRequest); //workersURLToClient.GetValueOrDefault(firstWorkerURL).StartAppAsync(startAppRequest);
 
             Console.WriteLine("Sent DIDARequest to worker.");
 
             executionId++;
 
-            return new StartAppReply();
+            return new StartAppReply
+            {
+                DebugMessage = reply.DebugMessage,
+            };
         }
 
         private List<DIDAAssignment> GenerateChain(Google.Protobuf.Collections.MapField<int, string> operators)

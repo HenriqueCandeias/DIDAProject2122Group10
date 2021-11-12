@@ -75,8 +75,8 @@ namespace Worker
         {
             if(debug)
             {
-            Console.WriteLine("Received a DIDARequest:");
-            Console.WriteLine(request.DidaRequest.ToString());
+                Console.WriteLine("Received a DIDARequest:");
+                Console.WriteLine(request.DidaRequest.ToString());
             }
 
             //Load the operator mentioned in the request by reflection
@@ -172,7 +172,13 @@ namespace Worker
             //If the app is inconsistent, it should terminate
             
             if (metaRecordConsistent.appIsInconsistent)
-                return new StartAppReply();
+            {
+                return new StartAppReply
+                {
+                    DebugMessage = GenerateDebugMessage(metaRecordConsistent),
+                };
+            }
+
 
             //Modify the received DIDARequest and send it to the next worker in the chain
 
@@ -215,15 +221,38 @@ namespace Worker
                 }
                 Thread.Sleep(workerDelay);
 
-                nextWorkerClient.StartApp(request);  //nextWorkerClient.StartAppAsync(request);
-
+                StartAppReply reply = nextWorkerClient.StartApp(request);  //nextWorkerClient.StartAppAsync(request);
+                
                 if(debug)
                 {
                     Console.WriteLine("Request sent.");
                 }
+
+                return new StartAppReply()
+                {
+                    DebugMessage = GenerateDebugMessage(metaRecordConsistent) + "\r\n" +reply.DebugMessage,
+                };
+            }
+            
+            return new StartAppReply()
+            {
+                DebugMessage = GenerateDebugMessage(metaRecordConsistent),
+            };
+        }
+
+        private static string GenerateDebugMessage(DIDAMetaRecordConsistent metaRecordConsistent)
+        {
+            string debugMessage = "RecordIdToConsistentVersion:";
+
+            foreach (KeyValuePair<string, DIDAWorker.DIDAVersion> pair in metaRecordConsistent.RecordIdToConsistentVersion)
+            {
+                debugMessage += "\r\n   Record ID: " + pair.Key + " DIDAVersion: {";
+                debugMessage += " Replica ID: " + pair.Value.ReplicaId + " Version Number: " + pair.Value.VersionNumber + " }";
             }
 
-            return new StartAppReply();
+            debugMessage += "\r\nApp is inconsistent: " + metaRecordConsistent.appIsInconsistent;
+
+            return debugMessage;
         }
 
         static IDIDAOperator LoadByReflection(string className)

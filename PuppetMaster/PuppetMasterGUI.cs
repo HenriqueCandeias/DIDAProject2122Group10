@@ -13,7 +13,7 @@ namespace PuppetMaster
 {
     public partial class PuppetMasterGUI : Form
     {
-        public PuppetMasterInitializer initializer = new PuppetMasterInitializer();
+        public PuppetMasterInitializer initializer;
 
         public Server server;
 
@@ -25,7 +25,9 @@ namespace PuppetMaster
         public PuppetMasterGUI()
         {
             InitializeComponent();
-            
+
+            initializer = new PuppetMasterInitializer(this);
+
             //This function is only used to run the system in a single machine
             initializer.StartPCS();
         }
@@ -88,6 +90,11 @@ namespace PuppetMaster
             }
 
             inputFile.Text = "All commands applied sucessfully.\r\n";
+        }
+
+        public void PrintDebugMessage(string debugMessage)
+        {
+            OutputBox.Text += "\r\n" + debugMessage + "\r\n";
         }
     }
 }

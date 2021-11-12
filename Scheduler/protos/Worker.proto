@@ -23,7 +23,7 @@ message StartAppRequest {
 }
 
 message StartAppReply {
-
+	string debugMessage = 1;
 }
 
 //Data Structures
@@ -38,7 +38,6 @@ message DIDARequest {
 
 message DIDAMetaRecord {
 	int32 id = 1;
-	// other metadata to be specified by the students
 }
 
 message DIDAAssignment {
