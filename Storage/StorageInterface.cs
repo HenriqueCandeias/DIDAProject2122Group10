@@ -6,6 +6,7 @@ using System.Text;
 using System.Timers;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace Storage
 {
@@ -294,7 +295,21 @@ namespace Storage
 
         public PopulateReply Populate(PopulateRequest request)
         {
-            storageImpl.write(request.Id, request.Val, true);
+            byte[] encodedRecordId = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(request.Id));
+            int hashedRecordId = BitConverter.ToInt32(encodedRecordId, 0) % storageClients.Count;
+            Console.WriteLine("Recieved Populate Requests");
+            Console.WriteLine("ID: " + request.Id + " Value: " + request.Val);
+            Console.WriteLine(hashedRecordId);
+            if(hashedRecordId == replicaId)
+            {
+                Console.WriteLine("Writing");
+                storageImpl.write(request.Id, request.Val, true);
+            }
+            else
+            {
+                Console.WriteLine("Not Writting");
+            }
+
             return new Storage.PopulateReply();
         }
     }
