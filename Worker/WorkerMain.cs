@@ -40,7 +40,7 @@ namespace Worker
                 Server server = new Server
                 {
                     Services = { WorkerService.BindService(new WorkerServer(worker_delay, puppet_master_URL, debug)) },
-                    Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) },
+                    Ports = { new ServerPort("0.0.0.0", port, ServerCredentials.Insecure) },
                 };
 
                 server.Start();

@@ -1,4 +1,4 @@
-scheduler sch0 http://localhost:10002
+scheduler sch0 http://193.136.167.182:10002
 worker wo0 http://localhost:10004 5000
 worker wo1 http://localhost:10005 5000
 worker wo2 http://localhost:10006 5000

@@ -297,20 +297,14 @@ namespace Storage
         {
             byte[] encodedRecordId = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(request.Id));
             int hashedRecordId = BitConverter.ToInt32(encodedRecordId, 0) % storageClients.Count;
-            Console.WriteLine("Recieved Populate Requests");
-            Console.WriteLine("ID: " + request.Id + " Value: " + request.Val);
-            Console.WriteLine(hashedRecordId);
+
             if(hashedRecordId == replicaId)
             {
-                Console.WriteLine("Writing");
+                Console.WriteLine("POPULATE - ID: " + request.Id + " Value: " + request.Val);
                 storageImpl.write(request.Id, request.Val, true);
             }
-            else
-            {
-                Console.WriteLine("Not Writting");
-            }
 
-            return new Storage.PopulateReply();
+            return new PopulateReply();
         }
     }
 }

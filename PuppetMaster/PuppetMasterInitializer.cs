@@ -160,7 +160,7 @@ namespace PuppetMaster
             GrpcChannel pcsChannel = GrpcChannel.ForAddress(URL.Split(':')[0] + ":" + URL.Split(':')[1] + ":" + pcsServerPort.ToString());
             PCSService.PCSServiceClient pcsClient = new PCSService.PCSServiceClient(pcsChannel);
 
-            pcsClient.StartSchedulerAsync(request);
+            pcsClient.StartScheduler(request);
 
             GrpcChannel schedulerChannel = GrpcChannel.ForAddress(URL);
             schedulerClient = new SchedulerService.SchedulerServiceClient(schedulerChannel);

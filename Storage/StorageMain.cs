@@ -24,7 +24,7 @@ namespace Storage
                 Server server = new Server
                 {
                     Services = { StorageService.BindService(new StorageServer(gossip_delay)) },
-                    Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) },
+                    Ports = { new ServerPort("0.0.0.0", port, ServerCredentials.Insecure) },
                 };
 
                 server.Start();

@@ -16,7 +16,7 @@ namespace PCS
                 Server server = new Server
                 {
                     Services = { PCSService.BindService(new PCSServer()) },
-                    Ports = { new ServerPort("localhost", pcsPort, ServerCredentials.Insecure) },
+                    Ports = { new ServerPort("0.0.0.0", pcsPort, ServerCredentials.Insecure) },
                 };
 
                 server.Start();
